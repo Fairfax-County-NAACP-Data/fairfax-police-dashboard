@@ -95,14 +95,17 @@ def get_timelines(data, population, reason_for_stop, period, gender, residency, 
     # df_search_na["Quarter"] = df_search_na["Month"].dt.to_timestamp().dt.to_period("Q")
     if reason_for_stop == "ALL":
         result['Total Stops'] = df.groupby(scale_col).sum(numeric_only=True).sum(axis=1).convert_dtypes()
+        result['Total Stops by Race'] = df.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
         # total_arrests = df[is_arrest].groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
         # total_searches = df_search.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
         # total_searches_na = df_search_na.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
     else:
         result['Total Stops'] = df.groupby(scale_col)[reason_for_stop].sum()
+        result['Total Stops by Race'] = df.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
         # total_arrests = df[is_arrest].groupby("Race/Ethnicity")[reason_for_stop].sum()
         # total_searches = df_search.groupby("Race/Ethnicity")[reason_for_stop].sum()
         # total_searches_na = df_search_na.groupby("Race/Ethnicity")[reason_for_stop].sum()
+    result['Total Stops'].name = 'Total Stops'
 
     return result
 

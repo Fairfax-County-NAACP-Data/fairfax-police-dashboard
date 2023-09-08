@@ -3,106 +3,20 @@ from numbers import Number
 import pandas as pd
 import hashlib
 
-def _plottime(*args, **kwargs):
-    data = [
-          {
-            'id': "LineOne",
-            'data': [
-              { 'x': "2019-05-01", 'y': 2 },
-              { 'x': "2019-06-01", 'y': 7 },
-              { 'x': "2020-03-01", 'y': 1 }
-            ]
-          },
-          {
-            'id': "LineTwo",
-            'data': [
-              { 'x': "2019-05-01", 'y': 1 },
-              { 'x': "2019-06-01", 'y': 5 },
-              { 'x': "2020-05-01", 'y': 5 }
-            ]
-          },
-          {
-            'id': "LineThree",
-            'data': [
-              { 'x': "2020-02-01", 'y': 4 },
-              { 'x': "2020-03-01", 'y': 6 },
-              { 'x': "2020-04-01", 'y': 1 }
-            ]
-          }
-        ]
-    with elements('time_tmp'):
-        with mui.Box(sx={"height": 400}):
-            nivo.Line(
-                data=data,
-                margin={ 'top': 50, 'right': 110, 'bottom': 50, 'left': 60 },
-                xScale={
-                'type': "time",
-                'format': "%Y-%m-%d"
-                },
-                xFormat={'time':"%Y-%m-%d"},
-                yScale={
-                'type': "linear",
-                'min': "auto",
-                'max': "auto",
-                'stacked': False,
-                'reverse': False
-                },
-                axisTop=None,
-                axisRight=None,
-                axisLeft={
-                'orient': "left",
-                'tickSize': 5,
-                'tickPadding': 5,
-                'tickRotation': 0,
-                'legend': "count",
-                'legendOffset': -40,
-                'legendPosition': "middle"
-                },
-                axisBottom={
-                'format': "%b %d",
-                #   'tickValues': "every 2 days",
-                #   'tickRotation': -90,
-                'legend': "time scale",
-                'legendOffset': -12
-                },
-                colors={ 'scheme': "nivo" },
-                pointSize=10,
-                pointColor={ 'theme': "background" },
-                pointBorderWidth=2,
-                pointBorderColor={ 'from': "serieColor" },
-                pointLabel="y",
-                pointLabelYOffset=-12,
-                useMesh=True,
-                legends=[
-                {
-                    'anchor': "bottom-right",
-                    'direction': "column",
-                    'justify': False,
-                    'translateX': 100,
-                    'translateY': 0,
-                    'itemsSpacing': 0,
-                    'itemDirection': "left-to-right",
-                    'itemWidth': 80,
-                    'itemHeight': 20,
-                    'itemOpacity': 0.75,
-                    'symbolSize': 12,
-                    'symbolShape': "circle",
-                    'symbolBorderColor': "rgba(0, 0, 0, .5)",
-                    'effects': [
-                    {
-                        'on': "hover",
-                        'style': {
-                        'itemBackground': "rgba(0, 0, 0, .03)",
-                        'itemOpacity': 1
-                        }
-                    }
-                    ]
-                }
-                ]
-            )
 
+def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='monthly', 
+         stacked=False, percent=False, columns=None):
+    
+    if percent:
+        data = data.divide(data.sum(axis=1),axis=0)
+        yformat = " >-.1%"
+        yaxisformat = ">-.0%"
+    else:
+        yformat = ""
+        yaxisformat = ""
 
-def plot(data, xlabel=None, ylabel=None, key=None, time_scale='monthly'):
+    if columns is not None:
+        data = data[columns]
 
     DATA = []
     if key is None:
@@ -111,13 +25,13 @@ def plot(data, xlabel=None, ylabel=None, key=None, time_scale='monthly'):
     time_scale = time_scale.lower()
     if "quarter" in time_scale:
         time_format = "Q%q %Y"
-        # time_format = '%Y-%m'
     elif 'annual' in time_scale:
         time_format = '%Y'
-        # time_format = '%Y-%m'
     else:
         time_format = '%Y-%m'
 
+    if isinstance(data, pd.Series):
+        data = pd.DataFrame(data)
     for k,v in data.items():
         if not isinstance(v, pd.Series):
             raise NotImplementedError("Only pandas Series implementation has been completed")
@@ -128,57 +42,72 @@ def plot(data, xlabel=None, ylabel=None, key=None, time_scale='monthly'):
         }
         if key is None:
             m.update(str.encode(k))
+            m.update(b"True" if percent else b"False")
+            m.update(b"True" if stacked else b"False")
         DATA.append(d)
 
     xscale = {'type':'linear', 'precision':'day', 'useUTC':False}
-    axisBottom = {}
+    axisBottom = {'legend': xlabel,
+                'legendOffset': 36,
+                'legendPosition': 'middle'}
     if isinstance(v.index.dtype, pd.PeriodDtype):
+        xscale['type'] = 'time'
+        xscale['format'] = time_format
         if "quarter" in time_scale:
-            xscale['type'] = 'point'
-            xscale['type'] = 'time'
-            xscale['format'] = time_format
             axisBottom['format'] = "Q%q %Y"
         elif "annual" in time_scale:
-            xscale['type'] = 'point'
-            xscale['type'] = 'time'
-            xscale['format'] = time_format
             axisBottom['format'] = "%Y"
             axisBottom['tickValues'] = 'every year'
         else:
-            xscale['type'] = 'time'
-            xscale['format'] = time_format
             axisBottom['format'] = "%b %Y"
             
     if key is None:
         key = m.hexdigest()
         
-    if xscale['type']=='time':
-        with elements(key):
+    # https://github.com/okld/streamlit-gallery/blob/ad224abfd5c2bc43a2937fa17c6f392672330688/streamlit_gallery/components/elements/dashboard/pie.py
+    with elements(key):
+        if title:
+            with mui.Stack(
+                    alignItems="center",
+                    direction="row",
+                    spacing=1,
+                    sx={
+                        "padding": "5px 15px 5px 15px",
+                        "borderBottom": 1,
+                        "borderColor": "divider",
+                    },
+                ):
+                    mui.icon.Timeline()
+                    mui.Typography(title, sx={"flex": 1})
+        with mui.Paper(key=key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
             with mui.Box(sx={"height": 400}):
                 nivo.Line(
                     data=DATA,
-                    margin={ 'top': 50, 'right': 110, 'bottom': 50, 'left': 60 },
+                    margin={ 'top': 30, 'right': 60, 'bottom': 50, 'left': 60 },
                     xScale=xscale,
+                    xFormat=f"time:{axisBottom['format']}",
+                    yFormat=yformat,
                     yScale={
                         'type': "linear",
                         'min': 0,
                         'max': "auto",
-                        'stacked': False,
+                        'stacked': stacked,
                         'reverse': False
                     },
-                    axisTop=None,
-                    axisRight=None,
+                    enableArea=stacked,
                     axisLeft={
                         'orient': "left",
                         'tickSize': 5,
                         'tickPadding': 5,
+                        'format':yaxisformat,
                         'tickRotation': 0,
-                        'legend': "count",
-                        'legendOffset': -40,
+                        'legend': ylabel,
+                        'legendOffset': -50,
                         'legendPosition': "middle"
                     },
                     axisBottom=axisBottom,
-                    colors={ 'scheme': "nivo" },
+                    colors={ 'scheme': "set3" },
+                    enableSlices='x',
                     pointSize=10,
                     pointColor={ 'theme': "background" },
                     pointBorderWidth=2,
@@ -188,11 +117,11 @@ def plot(data, xlabel=None, ylabel=None, key=None, time_scale='monthly'):
                     useMesh=True,
                     legends=[
                     {
-                        'anchor': "bottom-right",
-                        'direction': "column",
+                        'anchor': "top-left",
+                        'direction': "row",
                         'justify': False,
-                        'translateX': 100,
-                        'translateY': 0,
+                        'translateX': 0,
+                        'translateY': -20,
                         'itemsSpacing': 0,
                         'itemDirection': "left-to-right",
                         'itemWidth': 80,
@@ -213,64 +142,3 @@ def plot(data, xlabel=None, ylabel=None, key=None, time_scale='monthly'):
                     }
                     ]
                 )
-    else:
-        with elements(key+"2"):
-            with mui.Box(sx={"height": 400}):
-                nivo.Line(data=DATA,
-                    margin={ 'top': 50, 'right': 110, 'bottom': 50, 'left': 60 },
-                    xScale=xscale,
-                    yScale={
-                        'type': 'linear',
-                        'min': 0,
-                        'max': 'auto'
-                    },
-                    # yFormat=" >-.2f",
-                    axisBottom={
-                        'tickSize': 5,
-                        'tickPadding': 5,
-                        'tickRotation': 0,
-                        'legend': xlabel,
-                        'legendOffset': 36,
-                        'legendPosition': 'middle'
-                    },
-                    axisLeft={
-                        'tickSize': 5,
-                        'tickPadding': 5,
-                        'tickRotation': 0,
-                        'legend': ylabel,
-                        'legendOffset': -50,
-                        'legendPosition': 'middle'
-                    },
-                    pointSize=10,
-                    pointColor={ 'theme': 'background' },
-                    pointBorderWidth=2,
-                    pointBorderColor={ 'from': 'serieColor' },
-                    pointLabelYOffset=-12,
-                    useMesh=True,
-                    legends=[
-                            {
-                                'anchor': 'bottom-right',
-                                'direction': 'column',
-                                'justify': False,
-                                'translateX': 100,
-                                'translateY': 0,
-                                'itemsSpacing': 0,
-                                'itemDirection': 'left-to-right',
-                                'itemWidth': 80,
-                                'itemHeight': 20,
-                                'itemOpacity': 0.75,
-                                'symbolSize': 12,
-                                'symbolShape': 'circle',
-                                'symbolBorderColor': 'rgba(0, 0, 0, .5)',
-                                'effects': [
-                                    {
-                                        'on': 'hover',
-                                        'style': {
-                                            'itemBackground': 'rgba(0, 0, 0, .03)',
-                                            'itemOpacity': 1
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    )
