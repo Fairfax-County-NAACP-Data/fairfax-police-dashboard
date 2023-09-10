@@ -1,8 +1,6 @@
 from tqdm import tqdm
 from contextlib import contextmanager
 
-debug_mode = False
-
 class Progress:
     def __init__(self, val, text) -> None:
         self.nrows = 1000
@@ -32,7 +30,7 @@ def fake_context_manager(*args, **kwds):
     finally:
         pass
 
-def empty():
+def empty(*args, **kwargs):
     return fake_context_manager()
 
 def columns(count):
@@ -47,6 +45,9 @@ def selectbox(*args, **kwargs):
 def multiselect(*args, default=None, **kwargs):
     return default
 
+def do_nothing(*args, **kwargs):
+    pass
+
 
 def add_debug(st):
     st.session_state = {}
@@ -57,3 +58,9 @@ def add_debug(st):
     st.empty = empty
     st.selectbox = selectbox
     st.multiselect = multiselect
+
+    st.markdown = do_nothing
+    st.warning = do_nothing
+
+def debug_elements(streamlit_elements):
+    streamlit_elements.elements = empty

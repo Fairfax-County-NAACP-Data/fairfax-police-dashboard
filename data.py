@@ -50,7 +50,6 @@ def _getdates(data, date_key='result'):
 
     return min_date, max_date, min_residency_date
 
-@st.cache_data(show_spinner=False)
 def _filterdata(data, key, period, gender, residency, date_key='result'):
     min_date, max_date, min_residency_date = _getdates(data)
     if period == "ALL":
@@ -75,37 +74,53 @@ def _filterdata(data, key, period, gender, residency, date_key='result'):
     return df
 
 
+def _set_time(df, selected_scale):
+    if "annual" in selected_scale.lower():
+        df["TimeScale"] = df["Month"].dt.to_timestamp().dt.to_period("Y")
+    elif "quarter" in selected_scale.lower():
+        df["TimeScale"] = df["Month"].dt.to_timestamp().dt.to_period("Q")
+
+
+@st.cache_data(show_spinner=False)
 def get_timelines(data, population, reason_for_stop, period, gender, residency, selected_scale):
     min_date, max_date, min_residency_date = _getdates(data)
     df = _filterdata(data, 'result', period, gender, residency)
     df_search = _filterdata(data, 'search', period, gender, residency)
     df_search_na = _filterdata(data, 'search_na', period, gender, residency)
 
+    _set_time(df, selected_scale)
+    _set_time(df_search, selected_scale)
+    _set_time(df_search_na, selected_scale)
+
     is_arrest = df["action_taken"]=="ARREST"
     scale_col = "TimeScale"
     if "annual" in selected_scale.lower():
-        df["TimeScale"] = df["Month"].dt.to_timestamp().dt.to_period("Y")
+        months = 12
     elif "quarter" in selected_scale.lower():
-        df["TimeScale"] = df["Month"].dt.to_timestamp().dt.to_period("Q")
+        months = 3
     else:
         scale_col = "Month"
+        months = 1
     result = {}
-    # df["Quarter"] = df["Month"].dt.to_timestamp().dt.to_period("Q")
-    # df_search["Quarter"] = df_search["Month"].dt.to_timestamp().dt.to_period("Q")
-    # df_search_na["Quarter"] = df_search_na["Month"].dt.to_timestamp().dt.to_period("Q")
+    
     if reason_for_stop == "ALL":
-        result['Total Stops'] = df.groupby(scale_col).sum(numeric_only=True).sum(axis=1).convert_dtypes()
+        result['outcome'] = df.groupby(['action_taken','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
         result['Total Stops by Race'] = df.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
-        # total_arrests = df[is_arrest].groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
-        # total_searches = df_search.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
-        # total_searches_na = df_search_na.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
+        total_arrests = df[is_arrest].groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
+        total_searches = df_search.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
+        total_searches_na = df_search_na.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
     else:
-        result['Total Stops'] = df.groupby(scale_col)[reason_for_stop].sum()
+        result['outcome'] = df.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
         result['Total Stops by Race'] = df.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-        # total_arrests = df[is_arrest].groupby("Race/Ethnicity")[reason_for_stop].sum()
-        # total_searches = df_search.groupby("Race/Ethnicity")[reason_for_stop].sum()
-        # total_searches_na = df_search_na.groupby("Race/Ethnicity")[reason_for_stop].sum()
-    result['Total Stops'].name = 'Total Stops'
+        total_arrests = df[is_arrest].groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+        total_searches = df_search.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+        total_searches_na = df_search_na.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+    # result['Total Stops'].name = 'Total Stops'
+    # TODO: Fix 1st and last months stop rate
+    result['Stops per 1000 People^'] = (result['Total Stops by Race'] / population * 1000)[result['Total Stops by Race'].columns] * 12 / months
+    result['Arrest Rate'] = total_arrests / result['Total Stops by Race']
+    result['Search Rate'] = total_searches / result['Total Stops by Race']
+    result['Search Rate (Non-Arrests Only)*'] = total_searches_na / (result['Total Stops by Race']-total_arrests)
 
     return result
 

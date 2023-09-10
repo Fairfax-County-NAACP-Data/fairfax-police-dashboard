@@ -4,9 +4,10 @@ from argparse import ArgumentParser
 from datetime import datetime
 
 from stops_summary import stops_summary_dashboard
-from stops_timeline import stops_timeline_dashboard
+from stops_timeline import stops_rate_dashboard
+from stops_outcome import stops_outcome_dashboard
+from filters import add_filters
 from streamlit_logger import create_logger
-import streamlit_debug as stdb
 import data
 
 import openpolicedata as opd
@@ -15,9 +16,9 @@ parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
 args = parser.parse_args()
 
-stdb.debug_mode = args.debug
-if stdb.debug_mode:
+if args.debug:
     print('RUNNING IN DEBUG MODE')
+    import streamlit_debug as stdb
     # Overwrite streamlit functions with non-functioning versions to enable Python debug
     stdb.add_debug(st)
 
@@ -28,7 +29,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     layout = 'wide',
     menu_items={
-        'Report a Bug': "https://github.com/openpolicedata/OPD_Explorer/issues"
+        'Report a Bug': "https://github.com/Fairfax-County-NAACP-Data/fairfax-police-dashboard/issues"
     }
 )
 
@@ -51,14 +52,33 @@ def get_population(time):
 today = datetime.now().replace(hour=0, minute=0, second=0,microsecond=0)
 with st.empty():
     police_data = get_data(today)
-    tab1, tab2 = st.tabs(['Summary', "Timeline"])
+    # TODO: Add age range filters
+    st.warning("### FOR DEMONSTRATION PURPOSES ONLY: CALCULATION/NUMBERS STILL NEED TO BE VALIDATED.")
+
+filters = add_filters(police_data)
+
+tab1, tab2, tab3, tab4, tab5 = st.tabs(['Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force"])
 
 population = get_population(today)
 
 with tab1:
-    stops_summary_dashboard(police_data, population)
+    stops_summary_dashboard(police_data, population, filters['race'],
+                            filters['reason'], filters['time stats'], filters['gender'], filters['residency'])
 
 with tab2:
-    stops_timeline_dashboard(police_data, population)
+    stops_rate_dashboard(police_data, population,filters['race'],
+                            filters['reason'], filters['time series'], filters['gender'], filters['residency'],
+                            _debug=args.debug)
+    
+with tab3:
+    stops_outcome_dashboard(police_data, population, filters['race'],
+                            filters['reason'], filters['time stats'], filters['gender'], filters['residency'], 
+                            _debug=args.debug)
+
+with tab4:
+    st.markdown('# IN PROGRESS')
+
+with tab5:
+    st.markdown('### IN PROGRESS')
 
 logger.debug(f'Done with rendering dataframe using OPD Version {opd.__version__}')
