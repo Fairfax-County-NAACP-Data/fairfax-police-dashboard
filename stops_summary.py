@@ -47,6 +47,8 @@ def stops_summary_dashboard(police_data, population, selected_races,
             column_config=column_config
         )
 
+    st.warning("There may currently be errors in the Stops per 1000 people!")
+
     st.caption("^ Calculated on a per year basis  \n"
             "\* In Virginia, individuals are frequently searched during an arrest (i.e. they are searched because they are arrested rather than a search leads to an arrest). "+
             "The data provides no ability to distinguish between searches due to an arrest and discretionary searches and searches due to an arrest are the majority of searches.  "+

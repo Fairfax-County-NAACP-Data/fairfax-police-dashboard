@@ -82,14 +82,24 @@ def _set_time(df, selected_scale):
 
 
 @st.cache_data(show_spinner=False)
-def get_timelines(data, population, reason_for_stop, period, gender, residency, selected_scale):
+def get_timelines(data, population, reason_for_stop, period, gender, residency, selected_scale, period_stats=None):
     min_date, max_date, min_residency_date = _getdates(data)
     df = _filterdata(data, 'result', period, gender, residency)
+    if period_stats is None:
+        df_stats = df.copy()
+    else:
+        df_stats = _filterdata(data, 'result', period_stats, gender, residency)
     df_search = _filterdata(data, 'search', period, gender, residency)
+    if period_stats is None:
+        df_search_stats = df.copy()
+    else:
+        df_search_stats = _filterdata(data, 'search', period_stats, gender, residency)
     df_search_na = _filterdata(data, 'search_na', period, gender, residency)
 
     _set_time(df, selected_scale)
+    _set_time(df_stats, selected_scale)
     _set_time(df_search, selected_scale)
+    _set_time(df_search_stats, selected_scale)
     _set_time(df_search_na, selected_scale)
 
     is_arrest = df["action_taken"]=="ARREST"
@@ -104,21 +114,26 @@ def get_timelines(data, population, reason_for_stop, period, gender, residency, 
     result = {}
     
     if reason_for_stop == "ALL":
-        result['outcome'] = df.groupby(['action_taken','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
+        result['outcome_table'] = df_stats.groupby(['action_taken','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
         result['Total Stops by Race'] = df.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
         total_arrests = df[is_arrest].groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
+        total_warnings = df[df["action_taken"]=="WARNING ISSUED"].groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
+        # result['outcome_table_searches'] = df_search_stats.groupby(['action_taken','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
         total_searches = df_search.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
         total_searches_na = df_search_na.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
     else:
-        result['outcome'] = df.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+        result['outcome_table'] = df_stats.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
         result['Total Stops by Race'] = df.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
         total_arrests = df[is_arrest].groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+        total_warnings = df[df["action_taken"]=="WARNING ISSUED"].groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
         total_searches = df_search.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+        # result['outcome_table_searches'] = df_search_stats.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
         total_searches_na = df_search_na.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
     # result['Total Stops'].name = 'Total Stops'
     # TODO: Fix 1st and last months stop rate
     result['Stops per 1000 People^'] = (result['Total Stops by Race'] / population * 1000)[result['Total Stops by Race'].columns] * 12 / months
     result['Arrest Rate'] = total_arrests / result['Total Stops by Race']
+    result['Warning Rate'] = total_warnings / result['Total Stops by Race']
     result['Search Rate'] = total_searches / result['Total Stops by Race']
     result['Search Rate (Non-Arrests Only)*'] = total_searches_na / (result['Total Stops by Race']-total_arrests)
 

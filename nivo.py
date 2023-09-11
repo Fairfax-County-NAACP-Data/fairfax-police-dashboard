@@ -168,15 +168,23 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
 
 def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='monthly', 
          stacked=False, percent=False, columns=None, colors="dark2", height=350,
-         _debug=False):
+         _debug=False, yformat=None):
     
     if percent:
         data = data.divide(data.sum(axis=1),axis=0)
-        yformat = " >-.1%"
+        yFormat = " >-.1%"
         yaxisformat = ">-.0%"
     else:
-        yformat = ""
+        yFormat = ""
         yaxisformat = ""
+
+    if yformat is not None:
+        if isinstance(yformat,list):
+            yFormat = ">-"+yformat[0]
+            yaxisformat = ">-"+yformat[1]
+        else:
+            yFormat = ">-"+yformat
+            yaxisformat = yFormat
 
     if columns is not None:
         data = data[columns]
@@ -250,7 +258,7 @@ def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='month
                 margin={ 'top': 30, 'right': 60, 'bottom': 50, 'left': 60 },
                 xScale=xscale,
                 xFormat=f"time:{axisBottom['format']}",
-                yFormat=yformat,
+                yFormat=yFormat,
                 yScale={
                     'type': "linear",
                     'min': 0,

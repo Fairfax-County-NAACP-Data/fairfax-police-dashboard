@@ -72,7 +72,7 @@ with tab2:
     
 with tab3:
     stops_outcome_dashboard(police_data, population, filters['race'],
-                            filters['reason'], filters['time stats'], filters['gender'], filters['residency'], 
+                            filters['reason'], filters['time stats'], filters['time series'], filters['gender'], filters['residency'], 
                             _debug=args.debug)
 
 with tab4:

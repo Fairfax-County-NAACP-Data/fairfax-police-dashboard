@@ -27,5 +27,5 @@ def stops_rate_dashboard(police_data, population, selected_races,
                 stacked=True, columns=selected_races, colors='set3', _debug=_debug)
         nivo.plot(plot_data['Total Stops by Race'], ylabel="# of Stops", time_scale=selected_scale, title="Number of Stops (%)",
                 percent=True, columns=selected_races, _debug=_debug)
-        nivo.plot(plot_data['Stops per 1000 People^'], ylabel="# of Stops", time_scale=selected_scale, title="Stops per 1000 People^",
+        nivo.plot(plot_data['Stops per 1000 People^'], ylabel="# of Stops", time_scale=selected_scale, title="Stops per 1000 People^ (Likely errors in these values!)",
                 columns=selected_races, _debug=_debug)
