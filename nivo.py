@@ -5,7 +5,7 @@ import hashlib
 # Nivo colors: https://nivo.rocks/guides/colors/
 
 def bar(data, xlabel=None, ylabel=None, title=None, key=None, 
-         stacked=True, layout='vertical', percent=False, axis=1, columns=None, height=350, 
+         stacked=True, layout='vertical', percent=False, columns=None, height=350, 
          _debug=False):
     
     if percent:
@@ -18,6 +18,30 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
 
     if columns is not None:
         data = data[columns]
+
+    axis_bottom = {
+                'format':yaxisformat,
+                'tickSize': 5,
+                'tickPadding': 5,
+                'tickRotation': 0,
+                'legend': xlabel,
+                'legendPosition': 'middle',
+                'legendOffset': -45
+            }
+    axis_left = {
+            'tickSize': 5,
+            'tickPadding': 5,
+            'tickRotation': 0,
+            'legend': ylabel,
+            'legendPosition': 'middle',
+            'legendOffset': 32
+        }
+    if layout=='vertical':
+        axis_left['format'] = yaxisformat
+        margin_left = 70
+    else:
+        axis_bottom['format'] = yaxisformat
+        margin_left = 175
 
     DATA = []
     if key is None:
@@ -39,10 +63,6 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
         DATA.append(d)
 
     data_keys = [x for x in DATA[0].keys() if x!='id']
-
-    axisBottom = {'legend': xlabel,
-                'legendOffset': 36,
-                'legendPosition': 'middle'}
             
     if key is None:
         key = m.hexdigest()
@@ -68,9 +88,10 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
             nivo.Bar(
                     data=DATA,
                     keys=data_keys,
-                    margin={ 'top': 10, 'right': 200, 'bottom': 50, 'left': 70 },
+                    margin={ 'top': 10, 'right': 200, 'bottom': 50, 'left': margin_left },
                     padding=0.3,
                     valueFormat=yformat,
+                    layout=layout,
                     indexScale={ 'type': 'band', 'round': True },
                     colors={ 'scheme': 'nivo' },
                     defs=[
@@ -102,23 +123,8 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
                             ]
                         ]
                     },
-                    axisBottom={
-                        'tickSize': 5,
-                        'tickPadding': 5,
-                        'tickRotation': 0,
-                        'legend': xlabel,
-                        'legendPosition': 'middle',
-                        'legendOffset': 32
-                    },
-                    axisLeft={
-                        'format':yaxisformat,
-                        'tickSize': 5,
-                        'tickPadding': 5,
-                        'tickRotation': 0,
-                        'legend': ylabel,
-                        'legendPosition': 'middle',
-                        'legendOffset': -45
-                    },
+                    axisBottom=axis_bottom,
+                    axisLeft=axis_left,
                     labelSkipWidth=12,
                     labelSkipHeight=12,
                     labelTextColor={
@@ -158,51 +164,6 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
                     ariaLabel="Nivo bar chart demo"
             )
             return
-            nivo.Bar(
-                data=DATA,
-                margin={ 'top': 30, 'right': 60, 'bottom': 50, 'left': 60 },
-                padding=0.3,
-                groupMode='stacked' if stacked else 'grouped',
-                colors={ 'scheme': 'nivo' },
-                axisLeft={
-                    'orient': "left",
-                    'tickSize': 5,
-                    'tickPadding': 5,
-                    'format':yaxisformat,
-                    'tickRotation': 0,
-                    'legend': ylabel,
-                    'legendOffset': -50,
-                    'legendPosition': "middle"
-                },
-                yFormat=yformat,
-                axisBottom=axisBottom,
-                legends=[
-                {
-                    'anchor': "top-left",
-                    'direction': "row",
-                    'justify': False,
-                    'translateX': 0,
-                    'translateY': -20,
-                    'itemsSpacing': 0,
-                    'itemDirection': "left-to-right",
-                    'itemWidth': 80,
-                    'itemHeight': 20,
-                    'itemOpacity': 0.75,
-                    'symbolSize': 12,
-                    'symbolShape': "circle",
-                    'symbolBorderColor': "rgba(0, 0, 0, .5)",
-                    'effects': [
-                    {
-                        'on': "hover",
-                        'style': {
-                        'itemBackground': "rgba(0, 0, 0, .03)",
-                        'itemOpacity': 1
-                        }
-                    }
-                    ]
-                }
-                ]
-            )
 
 
 def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='monthly', 

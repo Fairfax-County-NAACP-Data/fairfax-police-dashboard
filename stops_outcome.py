@@ -20,5 +20,6 @@ def stops_outcome_dashboard(police_data, population, selected_races,
                                    selected_residency, selected_scale)
 
     with streamlit_elements.elements('stops_outcome'):
-        nivo.bar(plot_data['outcome'], xlabel="# of Stops", ylabel="Result of Stop", title="Result of Stop",
-                percent=True, stacked=True, columns=selected_races, layout='horizontal', axis=0, _debug=_debug)
+        # TODO: Add time range to title
+        nivo.bar(plot_data['outcome'], title="Result of Stop",
+                percent=True, stacked=True, columns=selected_races, layout='horizontal', _debug=_debug)
