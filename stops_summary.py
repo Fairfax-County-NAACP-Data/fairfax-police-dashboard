@@ -17,7 +17,7 @@ def stops_summary_dashboard(police_data, population, selected_races,
 
     st.header(f"Scorecard for {months.min().strftime('%B %Y')} to {months.max().strftime('%B %Y')}")
 
-    scard = data.get_scorecard(police_data, population, selected_reason, selected_time, selected_gender, selected_residency)
+    scard, _ = data.get_summary_stats(police_data, population, selected_reason, selected_time, selected_gender, selected_residency)
 
     if isinstance(scard, str):
         st.error(scard)

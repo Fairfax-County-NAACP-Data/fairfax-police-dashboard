@@ -19,13 +19,10 @@ def stops_rate_dashboard(police_data, population, selected_races,
     plot_data = data.get_timelines(police_data, population, selected_reason, selected_time, selected_gender, 
                                    selected_residency, selected_scale)
 
-    total_stops = plot_data['Total Stops by Race'][selected_races].sum(axis=1)
-    total_stops.name = 'Total Stops'
     with streamlit_elements.elements('stops_timeline'):
-        nivo.plot(total_stops, ylabel="# of Stops", time_scale=selected_scale, title="Number of Stops", _debug=_debug)
-        nivo.plot(plot_data['Total Stops by Race'], ylabel="# of Stops", time_scale=selected_scale, title="Number of Stops (Stacked): Number of StopsALTERNATIVE",
-                stacked=True, columns=selected_races, colors='set3', _debug=_debug)
-        nivo.plot(plot_data['Total Stops by Race'], ylabel="# of Stops", time_scale=selected_scale, title="Number of Stops (%)",
-                percent=True, columns=selected_races, _debug=_debug)
-        nivo.plot(plot_data['Stops per 1000 People^'], ylabel="# of Stops", time_scale=selected_scale, title="Stops per 1000 People^ (Likely errors in these values!)",
+        nivo.plot(plot_data['Total Stops by Race'], ylabel="# of Stops", time_scale=selected_scale, title="Number of Stops",
                 columns=selected_races, _debug=_debug)
+        nivo.plot(plot_data['Total Stops by Race'], ylabel=r"% of Stops", time_scale=selected_scale, title="Number of Stops (%)",
+                percent=True, columns=selected_races, _debug=_debug)
+        nivo.plot(plot_data['Stops per 1000 People^'], ylabel="# of Stops", time_scale=selected_scale, title="Stops per 1000 People^",
+                columns=selected_races, _debug=_debug, yformat=".1f")

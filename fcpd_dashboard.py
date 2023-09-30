@@ -3,15 +3,6 @@ import streamlit as st
 from argparse import ArgumentParser
 from datetime import datetime
 
-from stops_summary import stops_summary_dashboard
-from stops_timeline import stops_rate_dashboard
-from stops_outcome import stops_outcome_dashboard
-from filters import add_filters
-from streamlit_logger import create_logger
-import data
-
-import openpolicedata as opd
-
 parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
 args = parser.parse_args()
@@ -21,6 +12,15 @@ if args.debug:
     import streamlit_debug as stdb
     # Overwrite streamlit functions with non-functioning versions to enable Python debug
     stdb.add_debug(st)
+
+from stops_summary import stops_summary_dashboard
+from stops_timeline import stops_rate_dashboard
+from stops_outcome import stops_outcome_dashboard
+from filters import add_filters
+from streamlit_logger import create_logger
+import data
+
+import openpolicedata as opd
 
 # TODO: Update page_config
 st.set_page_config(
@@ -52,10 +52,7 @@ def get_population(time):
 today = datetime.now().replace(hour=0, minute=0, second=0,microsecond=0)
 with st.empty():
     police_data = get_data(today)
-    # TODO: Add age range filters
-    st.warning("### FOR DEMONSTRATION PURPOSES ONLY: CALCULATION/NUMBERS STILL NEED TO BE VALIDATED.")
-
-filters = add_filters(police_data)
+    filters = add_filters(police_data, sidebar=False)
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(['Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force"])
 

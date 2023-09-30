@@ -2,6 +2,9 @@ from streamlit_elements import nivo, mui, elements
 import pandas as pd
 import hashlib
 
+def to_percent(data, axis):
+    return data.divide(data.sum(axis=axis),axis=(axis+1)%2)
+
 # Nivo colors: https://nivo.rocks/guides/colors/
 
 def bar(data, xlabel=None, ylabel=None, title=None, key=None, 
@@ -9,7 +12,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
          _debug=False):
     
     if percent:
-        data = data.divide(data.sum(axis=0),axis=1)
+        data = to_percent(data,0)
         yformat = " >-.1%"
         yaxisformat = ">-.0%"
     else:
@@ -171,7 +174,7 @@ def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='month
          _debug=False, yformat=None):
     
     if percent:
-        data = data.divide(data.sum(axis=1),axis=0)
+        data = to_percent(data,1)
         yFormat = " >-.1%"
         yaxisformat = ">-.0%"
     else:

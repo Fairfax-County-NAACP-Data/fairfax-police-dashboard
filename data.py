@@ -1,6 +1,5 @@
 from datetime import datetime
 import logging
-import os
 import math
 import pandas as pd
 import openpolicedata as opd
@@ -32,46 +31,51 @@ def get_data(source_name="Virginia", table_type="STOPS", agency="Fairfax County 
     try:
         new_data = download_data(source_name, table_type, agency, start_date=start_date, logger=logger)
 
-        for t in tables:
-            new_months = new_data[t]["Month"].unique()
-            # For months in both datasets, replace with new data
-            data[t] = data[t][~data[t]['Month'].isin(new_months)]
-            data[t] = pd.concat([data[t], new_data[t]], ignore_index=True)
+        if len(new_data):
+            for t in tables:
+                new_months = new_data[t]["Month"].unique()
+                # For months in both datasets, replace with new data
+                data[t] = data[t][~data[t]['Month'].isin(new_months)]
+                data[t] = pd.concat([data[t], new_data[t]], ignore_index=True)
     except:
         pass
 
     return data
 
 @st.cache_data(show_spinner=False)
-def _getdates(data, date_key='result'):
+def _getdates(data, selected_residency, date_key='result'):
     min_date = data[date_key]["Month"].min()
     max_date = data[date_key]["Month"].max()
     min_residency_date = data[date_key][data[date_key]['residency'].notnull()]["Month"].min()
+    if selected_residency!='ALL':
+        min_date = min_residency_date
 
-    return min_date, max_date, min_residency_date
+    return min_date, max_date
 
-def _filterdata(data, key, period, gender, residency, date_key='result'):
-    min_date, max_date, min_residency_date = _getdates(data)
+def _filterdata(data, key, period, gender, residency, return_months=False):
+    min_date, max_date = _getdates(data, residency)
     if period == "ALL":
         df = data[key]
     elif period == "MOST RECENT YEAR":
-        min_date = max_date-12+1
+        min_date = max(min_date, max_date-12+1)
         df = data[key][data[key]["Month"]>=min_date]
     else:
-        min_date = pd.Period(period, "M")
+        min_date = max(min_date, pd.Period(period, "M"))
         max_date = min(max_date, pd.Period(period, "M")+12-1)
         df = data[key][data[key]["Month"].dt.year==period]
+
+    nmonths = (max_date - min_date).n+1
 
     if gender != "ALL":
         df = df[df["gender"]==gender]       
 
     if residency != "ALL":
-        min_date = max(min_residency_date, min_date)
-        if min_date > max_date:
-            return f"Residency data was not recorded prior to {min_residency_date.strftime('%B %Y')}"
         df = df[df["residency"]==residency]
 
-    return df
+    if return_months:
+        return df, nmonths
+    else:
+        return df
 
 
 def _set_time(df, selected_scale):
@@ -79,27 +83,18 @@ def _set_time(df, selected_scale):
         df["TimeScale"] = df["Month"].dt.to_timestamp().dt.to_period("Y")
     elif "quarter" in selected_scale.lower():
         df["TimeScale"] = df["Month"].dt.to_timestamp().dt.to_period("Q")
+    else:
+        df["TimeScale"] = df["Month"]
 
 
 @st.cache_data(show_spinner=False)
-def get_timelines(data, population, reason_for_stop, period, gender, residency, selected_scale, period_stats=None):
-    min_date, max_date, min_residency_date = _getdates(data)
+def get_timelines(data, population, reason_for_stop, period, gender, residency, selected_scale):
     df = _filterdata(data, 'result', period, gender, residency)
-    if period_stats is None:
-        df_stats = df.copy()
-    else:
-        df_stats = _filterdata(data, 'result', period_stats, gender, residency)
     df_search = _filterdata(data, 'search', period, gender, residency)
-    if period_stats is None:
-        df_search_stats = df.copy()
-    else:
-        df_search_stats = _filterdata(data, 'search', period_stats, gender, residency)
     df_search_na = _filterdata(data, 'search_na', period, gender, residency)
 
     _set_time(df, selected_scale)
-    _set_time(df_stats, selected_scale)
     _set_time(df_search, selected_scale)
-    _set_time(df_search_stats, selected_scale)
     _set_time(df_search_na, selected_scale)
 
     is_arrest = df["action_taken"]=="ARREST"
@@ -109,64 +104,66 @@ def get_timelines(data, population, reason_for_stop, period, gender, residency, 
     elif "quarter" in selected_scale.lower():
         months = 3
     else:
-        scale_col = "Month"
         months = 1
     result = {}
     
     if reason_for_stop == "ALL":
-        result['outcome_table'] = df_stats.groupby(['action_taken','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
-        result['Total Stops by Race'] = df.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
-        total_arrests = df[is_arrest].groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
-        total_warnings = df[df["action_taken"]=="WARNING ISSUED"].groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
-        # result['outcome_table_searches'] = df_search_stats.groupby(['action_taken','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
-        total_searches = df_search.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
-        total_searches_na = df_search_na.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
+        def sum_by_race(df):
+            return df.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
     else:
-        result['outcome_table'] = df_stats.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-        result['Total Stops by Race'] = df.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-        total_arrests = df[is_arrest].groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-        total_warnings = df[df["action_taken"]=="WARNING ISSUED"].groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-        total_searches = df_search.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-        # result['outcome_table_searches'] = df_search_stats.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-        total_searches_na = df_search_na.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-    # result['Total Stops'].name = 'Total Stops'
+        def sum_by_race(df):
+            return df.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+        
+    result['Total Stops by Race'] = sum_by_race(df)
+    total_arrests = sum_by_race(df[is_arrest])
+    total_warnings = sum_by_race(df[df["action_taken"]=="WARNING ISSUED"])
+    total_searches = sum_by_race(df_search)
+    total_searches_na = sum_by_race(df_search_na)
+
     # TODO: Fix 1st and last months stop rate
     result['Stops per 1000 People^'] = (result['Total Stops by Race'] / population * 1000)[result['Total Stops by Race'].columns] * 12 / months
-    result['Arrest Rate'] = total_arrests / result['Total Stops by Race']
-    result['Warning Rate'] = total_warnings / result['Total Stops by Race']
-    result['Search Rate'] = total_searches / result['Total Stops by Race']
-    result['Search Rate (Non-Arrests Only)*'] = total_searches_na / (result['Total Stops by Race']-total_arrests)
+    result['Arrest Rate'] = total_arrests.divide(result['Total Stops by Race'], fill_value=0)
+    result['Warning Rate'] = total_warnings.divide(result['Total Stops by Race'], fill_value=0)
+    result['Search Rate'] = total_searches.divide(result['Total Stops by Race'], fill_value=0)
+    result['Search Rate (Non-Arrests Only)*'] = total_searches_na.divide(result['Total Stops by Race'], fill_value=0)
 
     return result
 
-
-def get_scorecard(data, population, reason_for_stop, period, gender, residency):
-    min_date, max_date, min_residency_date = _getdates(data)
-    df = _filterdata(data, 'result', period, gender, residency)
+@st.cache_data(show_spinner=False)
+def get_summary_stats(data, population, reason_for_stop, period, gender, residency):
+    df, months = _filterdata(data, 'result', period, gender, residency, return_months=True)
     df_search = _filterdata(data, 'search', period, gender, residency)
     df_search_na = _filterdata(data, 'search_na', period, gender, residency)
 
     is_arrest = df["action_taken"]=="ARREST"
     result = {}
     if reason_for_stop == "ALL":
-        result['Total Stops'] = df.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
-        total_arrests = df[is_arrest].groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
-        total_searches = df_search.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
-        total_searches_na = df_search_na.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
+        def sum_by_race(df):
+            return df.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
+        def sum_actions(df):
+            return df.groupby(['action_taken','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
     else:
-        result['Total Stops'] = df.groupby("Race/Ethnicity")[reason_for_stop].sum()
-        total_arrests = df[is_arrest].groupby("Race/Ethnicity")[reason_for_stop].sum()
-        total_searches = df_search.groupby("Race/Ethnicity")[reason_for_stop].sum()
-        total_searches_na = df_search_na.groupby("Race/Ethnicity")[reason_for_stop].sum()
+        def sum_by_race(df):
+            return df.groupby("Race/Ethnicity")[reason_for_stop].sum()
+        def sum_actions(df):
+            return df.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+        
+    result['Outcomes'] = sum_actions(df)
+    result['Total Stops'] = sum_by_race(df)
+    total_arrests = sum_by_race(df[is_arrest])
+    total_searches = sum_by_race(df_search)
+    result['Search Outcomes'] = sum_actions(df_search)
+    total_searches_na = sum_by_race(df_search_na)
 
-    # Normalize to annual rate
-    months = (max_date - min_residency_date).n
     result['Stops per 1000 People^'] = (result['Total Stops'] / population * 1000)[result['Total Stops'].index] * 12 / months
-    result['Arrest Rate'] = total_arrests / result['Total Stops'] * 100
-    result['Search Rate'] = total_searches / result['Total Stops'] * 100
-    result['Search Rate (Non-Arrests Only)*'] = total_searches_na / (result['Total Stops']-total_arrests) * 100
+    result['Arrest Rate'] = total_arrests.divide(result['Total Stops'], fill_value=0) * 100
+    result['Search Rate'] = total_searches.divide(result['Total Stops'], fill_value=0) * 100
+    result['Search Rate (Non-Arrests Only)*'] = total_searches_na.divide((result['Total Stops']-total_arrests), fill_value=0) * 100
 
-    return pd.DataFrame(result)
+    df_result = pd.DataFrame({k:v for k,v in result.items() if isinstance(v,pd.Series)})
+    result = {k:v for k,v in result.items() if not isinstance(v,pd.Series)}
+
+    return df_result, result
 
 
 def download_data(source_name, table_type, agency, start_date="2020-01-01", logger=default_logger):
@@ -191,8 +188,6 @@ def download_data(source_name, table_type, agency, start_date="2020-01-01", logg
     data = {} 
     if len(df)>0:
         df = pd.concat(df)
-        logger.debug(f"Table size is {len(df)}")
-
         df["Month"] = df["incident_date"].dt.to_period("M")
         df["Quarter"] = df["incident_date"].dt.to_period("Q")
         df["Race/Ethnicity"] = df["race"].replace({
@@ -207,9 +202,9 @@ def download_data(source_name, table_type, agency, start_date="2020-01-01", logg
         df.loc[df["ethnicity"] == eth[0], "Race/Ethnicity"] = "LATINO"
         df.loc[df["ethnicity"] == "UNKNOWN", "Race/Ethnicity"] = "UNKNOWN"
 
-        data["result"] = df.value_counts(["Month","Race/Ethnicity",'gender','residency',"action_taken","reason_for_stop"], dropna=False).unstack(fill_value=0)
+        cols = ["Month","Race/Ethnicity",'gender','residency',"action_taken","reason_for_stop"]
 
-        cols = ["Month","Race/Ethnicity",'gender','residency',"reason_for_stop"]
+        data["result"] = df.value_counts(cols, dropna=False).unstack(fill_value=0)
 
         was_searched = (df["person_searched"]=="YES") | (df["vehicle_searched"]=="YES")
         data["search"] = df[was_searched].value_counts(cols, dropna=False).unstack(fill_value=0)
@@ -229,18 +224,8 @@ def download_data(source_name, table_type, agency, start_date="2020-01-01", logg
 
 
 def load_csv(csv_filename, *args, **kwargs):
-    try:
-        return pd.read_csv("https://raw.githubusercontent.com/Fairfax-County-NAACP-Data/fcpd-data/main/data/"+
+    return pd.read_csv("https://raw.githubusercontent.com/Fairfax-County-NAACP-Data/fcpd-data/main/data/"+
                             csv_filename.replace(" ","%20"), *args, **kwargs)
-    except Exception as e:
-        if os.path.exists(os.path.join(r"..\fcpd-data\data", csv_filename)):
-            try:
-                print(f"LOADING CSV {csv_filename} FROM LOCAL FILE!!!")
-                return pd.read_csv(os.path.join(r"..\fcpd-data\data", csv_filename), *args, **kwargs)
-            except:
-                raise e
-        else:
-            raise e
 
 
 def update_saved_data(source_name, table_type, agency, start_date="2020-01-01", logger=default_logger):
@@ -255,5 +240,4 @@ if __name__ == "__main__":
     # data = get_data()
     # population = get_population()
     # get_scorecard(data, population, "ALL", "ALL")
-    a = 1
     update_saved_data("Virginia", "STOPS", "Fairfax County Police Department")

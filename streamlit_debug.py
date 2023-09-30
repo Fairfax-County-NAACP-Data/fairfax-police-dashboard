@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 
 class Progress:
     def __init__(self, val, text) -> None:
@@ -56,6 +56,7 @@ def add_debug(st):
     st.cache_data = cache_data
     st.columns = columns
     st.empty = empty
+    st.sidebar = nullcontext()
     st.selectbox = selectbox
     st.multiselect = multiselect
 
