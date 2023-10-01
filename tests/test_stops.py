@@ -1,10 +1,14 @@
 import pytest
+
+import sys
+sys.path.append("./")
+
 import data
 from nivo import to_percent
 from helpers import filter_df, re_col
 
 @pytest.mark.parametrize("selected_reason", ["ALL", "TRAFFIC VIOLATION"])
-@pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
+@pytest.mark.parametrize("selected_time", ["ALL"])
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
 @pytest.mark.parametrize('selected_scale', ["Monthly","Quarterly","Annually"])

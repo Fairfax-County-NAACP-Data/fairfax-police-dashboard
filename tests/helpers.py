@@ -20,4 +20,18 @@ def filter_df(df_all, selected_reason, selected_time, selected_gender, selected_
         df_all = df_all[df_all['gender']==selected_gender]  
 
     return df_all, num_months
+
+def df_equal(df1, df2):
+    index = set(df1.index)
+    index.update(df2.index)
+    for k in index:
+        if k not in df1.index:
+            assert (df2.loc[k]==0).all()
+        elif k not in df2.index:
+            assert (df1.loc[k]==0).all()
+        else:
+            assert (
+                (df1.loc[k]==df2.loc[k])|
+                ((df1.loc[k].isnull() & df2.loc[k].isnull()))
+                ).all()
     

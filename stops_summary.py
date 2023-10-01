@@ -47,8 +47,6 @@ def stops_summary_dashboard(police_data, population, selected_races,
             column_config=column_config
         )
 
-    st.warning("There may currently be errors in the Stops per 1000 people!")
-
     st.caption("^ Calculated on a per year basis  \n"
             "\* In Virginia, individuals are frequently searched during an arrest (i.e. they are searched because they are arrested rather than a search leads to an arrest). "+
             "The data provides no ability to distinguish between searches due to an arrest and discretionary searches and searches due to an arrest are the majority of searches.  "+
@@ -57,13 +55,6 @@ def stops_summary_dashboard(police_data, population, selected_races,
 
     if len(selected_races)>0:
         disparity_thresh = 1.2
-        most_stops = scard.loc[selected_races]["Total Stops"].idxmax()
-
-        msg = f'{most_stops} individuals were stopped the most'
-        if selected_reason != "ALL":
-            msg += f" for {selected_reason}"
-        msg+=f': {int(scard.loc[most_stops]["Total Stops"])} stops'
-        st.info(msg)
 
         highest_rate = scard.loc[selected_races]["Stops per 1000 People^"].idxmax()
         msg = f'{highest_rate} individuals were stopped at a rate of {scard.loc[highest_rate]["Stops per 1000 People^"]:.1f} stops'
@@ -117,6 +108,3 @@ def stops_summary_dashboard(police_data, population, selected_races,
                         'times higher than the rate for WHITE individuals.')
         else:
             st.info(msg)
-        
-    st.warning("TODO: Confirm that statistics are correct")
-    st.warning("Put data description and/or CPA link somewhere?")

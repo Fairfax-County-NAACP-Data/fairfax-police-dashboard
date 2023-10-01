@@ -28,20 +28,24 @@ def add_filters(police_data, sidebar=True):
 
     selection = {}
     with sb:
-        with st.expander('Data Filters: Expand to filter data', expanded=sidebar):
+        with st.expander('Data Filters: Expand to change filters', expanded=sidebar):
             if sidebar:
                 col1=nullcontext()
                 col2=nullcontext()
-                col3=nullcontext()
             else:
-                col1, col2, col3 = st.columns(3)
+                col1, col2, col3= st.columns(3)
 
             with col1:
                 selection['time stats'] = st.selectbox("Time Range for Statistics", time_periods, index=1,
-                                                help="Stop totals, arrest rates, and other calculations in tables and pie charts will used data for the selected time period")
+                                                help="Stop totals, arrest rates, and other calculations in tables and pie charts will "
+                                                 "only use data for the selected time period")
             with col2:
-                selection['time series'] = st.selectbox("Time Range for Time Charts", time_periods, 
-                                                help="Filter to show only statistics for selected time period")
+                selection['time scale'] = st.selectbox("Time Scale", ["Monthly",'Quarterly','Annually'], 
+                                    index=1,
+                                    help='Time scale to use on time axis of graphs')
+                # selection['time series'] = st.selectbox("Time Range for Time Charts", time_periods, 
+                #                                 help="Filter to show only statistics for selected time period")
+            selection['time series'] = 'ALL'
             with col3:
                 selection['reason'] = st.selectbox("Reason For Stop", reasons_for_stop,
                                                 # default=reasons_for_stop,

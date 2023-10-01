@@ -9,7 +9,7 @@ def to_percent(data, axis):
 
 def bar(data, xlabel=None, ylabel=None, title=None, key=None, 
          stacked=True, layout='vertical', percent=False, columns=None, height=350, 
-         _debug=False):
+         _debug=False, label_format=None, yoffset=32):
     
     if percent:
         data = to_percent(data,0)
@@ -18,12 +18,20 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
     else:
         yformat = ""
         yaxisformat = ""
+    
+    if label_format:
+        yformat = label_format
+        if isinstance(label_format,list):
+            yformat = ">-"+label_format[0]
+            yaxisformat = ">-"+label_format[1]
+        else:
+            yformat = ">-"+label_format
+            yaxisformat = yformat
 
     if columns is not None:
         data = data[columns]
 
     axis_bottom = {
-                'format':yaxisformat,
                 'tickSize': 5,
                 'tickPadding': 5,
                 'tickRotation': 0,
@@ -37,7 +45,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
             'tickRotation': 0,
             'legend': ylabel,
             'legendPosition': 'middle',
-            'legendOffset': 32
+            'legendOffset': yoffset
         }
     if layout=='vertical':
         axis_left['format'] = yaxisformat
@@ -91,6 +99,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
             nivo.Bar(
                     data=DATA,
                     keys=data_keys,
+                    groupMode="stacked" if stacked else "grouped",
                     margin={ 'top': 10, 'right': 200, 'bottom': 50, 'left': margin_left },
                     padding=0.3,
                     valueFormat=yformat,

@@ -1,10 +1,11 @@
 import pandas as pd
 import pytest
+
+import sys
+sys.path.append("./")
+
 from helpers import filter_df, re_col
-
 import data
-
-exclude = ["MISSING"]
 
 @pytest.mark.parametrize("selected_reason", ["ALL", "TRAFFIC VIOLATION"])
 @pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
@@ -66,6 +67,28 @@ def test_search_rate(df_gt, df_dash, population, selected_reason, selected_time,
     vc_search = df_all[was_searched][re_col].value_counts()
     vc = vc_search.divide(vc, fill_value=0) * 100
 
+    index = set(vc.index)
+    index.update(scard[col].index)
+    for k in index:
+        assert ((k not in vc or pd.isnull(vc[k])) and (k not in scard[col] or pd.isnull(scard[col][k]))) or \
+            vc[k] == scard[col][k]
+
+@pytest.mark.parametrize("selected_reason", ["ALL", "TRAFFIC VIOLATION"])
+@pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
+@pytest.mark.parametrize("selected_gender", ["ALL","MALE"])
+@pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
+def test_uof_rate(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency):
+    scard, _ = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+    df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency)
+
+    df_all = df_all[df_all["Month"]>="2021-07"]
+
+    assert len(df_all)>0    
+    vc = df_all[re_col].value_counts()
+    vc_uof = df_all[df_all["physical_force_by_officer"]=="YES"][re_col].value_counts()
+    vc = vc_uof.divide(vc, fill_value=0) * 100
+
+    col = 'Officer Use of Force Rate'
     index = set(vc.index)
     index.update(scard[col].index)
     for k in index:

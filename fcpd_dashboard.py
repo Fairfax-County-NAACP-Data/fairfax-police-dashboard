@@ -5,6 +5,7 @@ from datetime import datetime
 
 parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
+parser.add_argument("-t", "--time", action='store', default=None)
 args = parser.parse_args()
 
 if args.debug:
@@ -16,6 +17,8 @@ if args.debug:
 from stops_summary import stops_summary_dashboard
 from stops_timeline import stops_rate_dashboard
 from stops_outcome import stops_outcome_dashboard
+from stops_search import stops_search_dashboard
+from stops_uof import stops_uof_dashboard
 from filters import add_filters
 from streamlit_logger import create_logger
 import data
@@ -54,7 +57,10 @@ with st.empty():
     police_data = get_data(today)
     filters = add_filters(police_data, sidebar=False)
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(['Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(['Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force", "About"])
+
+if args.time:
+    filters['time stats'] = args.time
 
 population = get_population(today)
 
@@ -65,17 +71,28 @@ with tab1:
 with tab2:
     stops_rate_dashboard(police_data, population,filters['race'],
                             filters['reason'], filters['time series'], filters['gender'], filters['residency'],
+                            filters['time scale'],
                             _debug=args.debug)
     
 with tab3:
     stops_outcome_dashboard(police_data, population, filters['race'],
                             filters['reason'], filters['time stats'], filters['time series'], filters['gender'], filters['residency'], 
+                            filters['time scale'],
                             _debug=args.debug)
 
 with tab4:
-    st.markdown('# IN PROGRESS')
+    stops_search_dashboard(police_data, population, filters['race'],
+                            filters['reason'], filters['time stats'], filters['time series'], filters['gender'], filters['residency'], 
+                            filters['time scale'],
+                            _debug=args.debug)
 
 with tab5:
-    st.markdown('### IN PROGRESS')
+    stops_uof_dashboard(police_data, population, filters['race'],
+                            filters['reason'], filters['time stats'], filters['time series'], filters['gender'], filters['residency'], 
+                            filters['time scale'],
+                            _debug=args.debug)
+    
+with tab6:
+    st.warning("TODO: Add About section with information where data is accessed from")
 
 logger.debug(f'Done with rendering dataframe using OPD Version {opd.__version__}')
