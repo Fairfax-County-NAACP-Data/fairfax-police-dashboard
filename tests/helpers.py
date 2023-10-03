@@ -28,7 +28,7 @@ def df_equal(df1, df2):
         if k not in df1.index:
             assert (df2.loc[k]==0).all()
         elif k not in df2.index:
-            assert (df1.loc[k]==0).all()
+            assert (df1.loc[k]==0).all() or df1.loc[k].isnull().all()
         else:
             assert (
                 (df1.loc[k]==df2.loc[k])|

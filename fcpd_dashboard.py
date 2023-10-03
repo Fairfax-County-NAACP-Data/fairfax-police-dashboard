@@ -3,6 +3,9 @@ import streamlit as st
 from argparse import ArgumentParser
 from datetime import datetime
 
+# TODO: Add title bar
+# TODO: Add help
+
 parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
 parser.add_argument("-t", "--time", action='store', default=None)

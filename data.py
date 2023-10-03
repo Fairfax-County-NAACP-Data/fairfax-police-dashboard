@@ -9,6 +9,8 @@ import streamlit as st
 default_logger = logging.getLogger("critical")
 default_logger.setLevel(logging.CRITICAL)
 
+_SUBTRACT_ARRESTS = True
+
 def get_population():
     # TODO: Create population table that can be broken down by age and gender
     df = load_csv('FairfaxCountyPopulation.csv',index_col="Race/Ethnicity")
@@ -153,10 +155,11 @@ def get_timelines(data, population, reason_for_stop, period, gender, residency, 
                              "Vehicle Only":sum_by_race(df_filt['vehicle_searched_only']).divide(result['Total Stops by Race'], fill_value=0),
                              "Both Only":sum_by_race(df_filt['both_searched']).divide(result['Total Stops by Race'], fill_value=0),
                              }
-    result['Search Rate NA'] = {"All":sum_by_race(df_filt['All Searches NA']).divide(result['Total Stops by Race'], fill_value=0),
-                             "Person Only":sum_by_race(df_filt['person_searched_only_na']).divide(result['Total Stops by Race'], fill_value=0),
-                             "Vehicle Only":sum_by_race(df_filt['vehicle_searched_only_na']).divide(result['Total Stops by Race'], fill_value=0),
-                             "Both Only":sum_by_race(df_filt['both_searched_na']).divide(result['Total Stops by Race'], fill_value=0),
+    total_stop_na = sum_by_race(df_filt['result'][~is_arrest]) if _SUBTRACT_ARRESTS else result['Total Stops by Race']
+    result['Search Rate NA'] = {"All":sum_by_race(df_filt['All Searches NA']).divide(total_stop_na, fill_value=0),
+                             "Person Only":sum_by_race(df_filt['person_searched_only_na']).divide(total_stop_na, fill_value=0),
+                             "Vehicle Only":sum_by_race(df_filt['vehicle_searched_only_na']).divide(total_stop_na, fill_value=0),
+                             "Both Only":sum_by_race(df_filt['both_searched_na']).divide(total_stop_na, fill_value=0),
                              }
     total_stops_cpa_update = result['Total Stops by Race'][result['Total Stops by Race'].index>="2021-07"]
     result['UoF Rate'] = {
@@ -216,7 +219,7 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
     result['Search Counts NA'] = pd.DataFrame({"Person":sum_by_race(df_filt['person_searched_only_na']),
                                             "Vehicle":sum_by_race(df_filt['vehicle_searched_only_na']),
                                             "Both":sum_by_race(df_filt['both_searched_na'])}).transpose()
-    total_stop_na = sum_by_race(df_filt['result'][df_filt['result']['action_taken']!="ARREST"])
+    total_stop_na = sum_by_race(df_filt['result'][df_filt['result']['action_taken']!="ARREST"]) if _SUBTRACT_ARRESTS else result['Total Stops']
     search_rate_total_na = sum_by_race(df_filt['All Searches NA']).divide(total_stop_na, fill_value=0)
     result['Search Rates NA'] = pd.DataFrame({"Person":result['Search Counts NA'].loc["Person"].divide(total_stop_na, fill_value=0),
                                             "Vehicle":result['Search Counts NA'].loc["Vehicle"].divide(total_stop_na, fill_value=0),
