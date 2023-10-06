@@ -3,7 +3,9 @@ import pandas as pd
 import hashlib
 
 def to_percent(data, axis):
-    return data.divide(data.sum(axis=axis),axis=(axis+1)%2)
+    # Replace 0 with 1 to avoid issues with NaN when plotting
+    sm = data.sum(axis=axis).replace(0,1)
+    return data.divide(sm,axis=(axis+1)%2)
 
 # Nivo colors: https://nivo.rocks/guides/colors/
 
@@ -28,7 +30,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
             yformat = ">-"+label_format
             yaxisformat = yformat
 
-    if columns is not None:
+    if columns is not None and len(data.columns)>0:
         data = data[columns]
 
     axis_bottom = {
@@ -73,7 +75,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
             m.update(b"True" if stacked else b"False")
         DATA.append(d)
 
-    data_keys = [x for x in DATA[0].keys() if x!='id']
+    data_keys = [x for x in DATA[0].keys() if x!='id'] if len(DATA)>0 else []
             
     if key is None:
         key = m.hexdigest()

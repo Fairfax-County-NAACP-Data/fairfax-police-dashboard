@@ -19,6 +19,7 @@ def stops_uof_dashboard(police_data, population, selected_races,
     with streamlit_elements.elements('stops_uof'):
         # TODO: Add time range to title
         # TODO: Throws error when Unknown selected!
+        # TODO: Add outcomes when there is use of force
         nivo.bar(summary_data['Officer UoF Counts'],
                  title="Use of Force By Officer", stacked=True, ylabel="Subject Race",
                  columns=selected_races, layout='horizontal',_debug=_debug,
@@ -36,3 +37,10 @@ def stops_uof_dashboard(police_data, population, selected_races,
         nivo.plot(time_data['UoF Rate']["Subject"], ylabel="Use of Force Rate", time_scale=selected_scale, 
                   title=r"Subject Use of Force Rate: % of stops that end in a subject using force",
                 columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"])
+    
+    selectedUoF = st.selectbox("Use of Force", summary_data['Uof Outcomes'].keys())
+    with streamlit_elements.elements('stops_uof2'):
+        nivo.bar(summary_data['Uof Outcomes'][selectedUoF],
+                 title="Outcomes of Stops Where Use of Force Occurs", stacked=True, ylabel="Subject Race",
+                 columns=selected_races, layout='horizontal',_debug=_debug, percent=True,
+                 yoffset=-150)

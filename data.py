@@ -201,9 +201,16 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
     else:
         result["reasons"] = df_filt['result'].groupby("Race/Ethnicity")[[reason_for_stop]].sum().transpose()
         def sum_by_race(df):
-            return df.groupby("Race/Ethnicity")[reason_for_stop].sum()
+            if reason_for_stop in df:
+                return df.groupby("Race/Ethnicity")[reason_for_stop].sum()
+            else:
+                return pd.Series({k:0 for k in df["Race/Ethnicity"].unique()}, name=reason_for_stop)
         def sum_actions(df):
+            if reason_for_stop not in df:
+                df = df.copy()
+                df[reason_for_stop] = 0
             return df.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+
         
     result['Outcomes'] = sum_actions(df_filt['result'])
     result['Total Stops'] = sum_by_race(df_filt['result'])
@@ -245,6 +252,14 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
     result['Search Rate'] = search_rate_total * 100
     result['Search Rate (Non-Arrests Only)*'] = search_rate_total_na * 100
     result['Officer Use of Force Rate'] = officer_uof_rate_total * 100
+
+    result['Uof Outcomes'] = {
+        "By Officer Only":sum_actions(df_filt['uof_officer_only']),
+        "By Officer Total":sum_actions(df_filt['All UoF Officer']),
+        "By Subject and Officer":sum_actions(df_filt['uof_both']),
+        "By Subject Only":sum_actions(df_filt['uof_subject_only']),
+        "By Subject Total":sum_actions(df_filt['All UoF Subject'])
+    }
 
     df_result = pd.DataFrame({k:v for k,v in result.items() if isinstance(v,pd.Series)})
     result = {k:v for k,v in result.items() if not isinstance(v,pd.Series)}

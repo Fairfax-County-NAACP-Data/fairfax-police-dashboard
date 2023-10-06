@@ -36,9 +36,10 @@ def stops_summary_dashboard(police_data, population, selected_races,
             }
 
         for k in range(2, len(scard.columns)):
+            mx = float(scard[scard.columns[k]].max()) if scard[scard.columns[k]].notnull().any() else 1
             column_config[scard.columns[k]] = st.column_config.ProgressColumn(
                     min_value=0,
-                    max_value=float(scard[scard.columns[k]].max()),
+                    max_value=mx,
                     format="%0.1f%%"
                 )
 

@@ -39,8 +39,8 @@ def columns(count):
 def tabs(tab_names):
     return (fake_context_manager() for _ in range(len(tab_names)))
 
-def selectbox(*args, **kwargs):
-    return "ALL"
+def selectbox(_, options, *args, **kwargs):
+    return list(options)[0]
 
 def multiselect(*args, default=None, **kwargs):
     return default

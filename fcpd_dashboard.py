@@ -5,10 +5,12 @@ from datetime import datetime
 
 # TODO: Add title bar
 # TODO: Add help
+# TODO: Remove NaNs from dropdowns or replace with empty
 
 parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
 parser.add_argument("-t", "--time", action='store', default=None)
+parser.add_argument("-r", "--reason", action='store', default=None)
 args = parser.parse_args()
 
 if args.debug:
@@ -63,7 +65,10 @@ with st.empty():
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(['Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force", "About"])
 
 if args.time:
-    filters['time stats'] = args.time
+    filters['time stats'] = int(args.time) if args.time.isdigit() else args.time
+
+if args.reason:
+    filters['reason'] = args.reason
 
 population = get_population(today)
 
