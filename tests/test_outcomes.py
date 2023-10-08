@@ -11,8 +11,8 @@ from nivo import to_percent
 @pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
-def test_reason_counts(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency):
-    _, summary_data = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_reason_counts(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency):
+    _, summary_data = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 
     vc = df_all[['reason_for_stop',re_col]].value_counts().unstack(fill_value=0)
@@ -23,8 +23,8 @@ def test_reason_counts(df_gt, df_dash, population, selected_reason, selected_tim
 @pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
-def test_outcome_counts(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency):
-    _, summary_data = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_outcome_counts(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency):
+    _, summary_data = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 
     summary_data['reasons'] = to_percent(summary_data['Outcomes'], axis=0)*100
@@ -49,8 +49,8 @@ def test_outcome_counts(df_gt, df_dash, population, selected_reason, selected_ti
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
 @pytest.mark.parametrize('selected_scale', ["Monthly","Quarterly","Annually"])
 @pytest.mark.parametrize("result", ["ARREST","WARNING ISSUED"])
-def test_rates(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, selected_scale, result):
-    time_data = data.get_timelines(df_dash, population, selected_reason, selected_time, selected_gender, 
+def test_rates(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency, selected_scale, result):
+    time_data = data.get_timelines(df_dash, db_population, selected_reason, selected_time, selected_gender, 
                                    selected_residency, selected_scale)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 

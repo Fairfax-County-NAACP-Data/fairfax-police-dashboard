@@ -3,9 +3,9 @@ import streamlit as st
 from argparse import ArgumentParser
 from datetime import datetime
 
-# TODO: Add title bar
-# TODO: Add help
-# TODO: Remove NaNs from dropdowns or replace with empty
+__version__ = "0.1-beta"
+
+# TODO: Add help strings
 
 parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
@@ -29,6 +29,14 @@ from streamlit_logger import create_logger
 import data
 
 import openpolicedata as opd
+
+def markdown_file(file):
+    with open(file) as f:
+        text = f.read()
+
+    st.markdown(text)
+
+sidebar = True
 
 # TODO: Update page_config
 st.set_page_config(
@@ -56,13 +64,17 @@ def get_data(time):
 def get_population(time):
     return data.get_population()
 
+st.title("Fairfax County Police Department Stops Data")
+
 # Add input so that new data will be loaded once a day
 today = datetime.now().replace(hour=0, minute=0, second=0,microsecond=0)
 with st.empty():
     police_data = get_data(today)
-    filters = add_filters(police_data, sidebar=False)
+    st.markdown("Welcome to Fairfax County XXXXX's dashboard on traffic and other types of police stops by the Fairfax County Police Department. "+
+            "See the `About` section for more information about police stops and the data. See the `Help` section for the basics on navigating "+
+            "this dashboard.")
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(['Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force", "About"])
+filters = add_filters(police_data, sidebar=sidebar)
 
 if args.time:
     filters['time stats'] = int(args.time) if args.time.isdigit() else args.time
@@ -72,6 +84,7 @@ if args.reason:
 
 population = get_population(today)
 
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(['Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force", "About", "Help"])
 with tab1:
     stops_summary_dashboard(police_data, population, filters['race'],
                             filters['reason'], filters['time stats'], filters['gender'], filters['residency'])
@@ -101,6 +114,17 @@ with tab5:
                             _debug=args.debug)
     
 with tab6:
-    st.warning("TODO: Add About section with information where data is accessed from")
+    markdown_file(r"./markdown/about.md")
 
-logger.debug(f'Done with rendering dataframe using OPD Version {opd.__version__}')
+with tab7:
+    markdown_file(r"./markdown/help.md")
+
+st.divider()
+st.markdown("Dashboard is generated using Community Policing Act data aggregated by the Virginia State Police. It can be accessed from the "+
+            "[Virginia Open Data Portal](https://data.virginia.gov/Public-Safety/Community-Policing-Data-July-1-2020-to-June-30-202/2c96-texw). "
+            "[OpenPoliceData](https://openpolicedata.readthedocs.io/) was used to load data into this dashboard " +
+            "and can be easily used to download the raw data.")
+
+# TODO: Add debug information including IP and information about what people are doing on the dashboard?
+logger.info(f"Dashboard version is {__version__}")
+logger.info(f'OPD version is {opd.__version__}')

@@ -12,8 +12,8 @@ from helpers import filter_df, re_col
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
 @pytest.mark.parametrize('selected_scale', ["Monthly","Quarterly","Annually"])
-def test_total_stops(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, selected_scale):
-    plot_data = data.get_timelines(df_dash, population, selected_reason, selected_time, selected_gender, 
+def test_total_stops(df_gt, df_dash, db_population, gt_population, selected_reason, selected_time, selected_gender, selected_residency, selected_scale):
+    plot_data = data.get_timelines(df_dash, db_population, selected_reason, selected_time, selected_gender, 
                                    selected_residency, selected_scale)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency)
 
@@ -36,10 +36,10 @@ def test_total_stops(df_gt, df_dash, population, selected_reason, selected_time,
     pcent = to_percent(plot_data['Total Stops by Race'], 1)*100
     assert pcent.to_dict() == vc_perc.to_dict()
 
-    stop_rate = (vc / population)[vc.columns] * 1000 * scale
+    stop_rate = (vc / gt_population)[vc.columns] * 1000 * scale
     assert (stop_rate.columns==plot_data['Stops per 1000 People^'].columns).all()
     assert (stop_rate.index==plot_data['Stops per 1000 People^'].index).all()
     for col in stop_rate.columns:
-        assert (stop_rate[col].round(4)==plot_data['Stops per 1000 People^'][col].round(4)).all() or \
+        assert (stop_rate[col].convert_dtypes().round(4)==plot_data['Stops per 1000 People^'][col].round(4)).all() or \
             (plot_data['Stops per 1000 People^'][col].isnull().all() and \
              stop_rate[col].isnull().all())

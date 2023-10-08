@@ -31,7 +31,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
             yaxisformat = yformat
 
     if columns is not None and len(data.columns)>0:
-        data = data[columns]
+        data = data[[x for x in columns if x in data]]
 
     axis_bottom = {
                 'tickSize': 5,
@@ -201,7 +201,9 @@ def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='month
             yaxisformat = yFormat
 
     if columns is not None:
-        data = data[columns]
+        data = data[[x for x in columns if x in data]]
+
+    data = data.dropna(axis=1, how='all')
 
     DATA = []
     if key is None:

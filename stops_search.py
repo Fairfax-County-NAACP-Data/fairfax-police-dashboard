@@ -39,20 +39,19 @@ def stops_search_dashboard(police_data, population, selected_races,
         counts = summary_data['Search Counts'+addon]
         rates = summary_data['Search Rates'+addon]
     else:
-        counts = summary_data['Search Counts'+addon].loc[[selected_type.replace(" Only","")],:]
-        rates = summary_data['Search Rates'+addon].loc[[selected_type.replace(" Only","")],:]
+        counts = summary_data['Search Counts'+addon].loc[[selected_type],:]
+        rates = summary_data['Search Rates'+addon].loc[[selected_type],:]
+
+    min_date, max_date = data.get_date_range(selected_time_stats, data=police_data, residency=selected_residency)
+    date_range = f"{min_date.strftime('%B %Y')} - {max_date.strftime('%B %Y')}"
 
     with streamlit_elements.elements('stops_search'):
-        # TODO: Add time range to title
-        # TODO: Throws error when Unknown selected!
         nivo.bar(counts,
-                 title="Search Counts", stacked=True,
+                 title=f"Search Counts: {date_range}", stacked=True,
                  columns=selected_races, layout='horizontal',_debug=_debug)
         nivo.bar(rates,
-                 title="Search Rates", stacked=False,
+                 title=f"Search Rates: {date_range}", stacked=False,
                  columns=selected_races, layout='vertical',_debug=_debug, label_format=[".1%",".0%"])
         nivo.plot(time_data['Search Rate'+addon][selected_type], ylabel="Search Rate", time_scale=selected_scale, 
                   title=r"Search Rate: % of stops that end in a search",
                 columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"])
-        # nivo.plot(time_data['Warning Rate'], ylabel="Warning Rate", time_scale=selected_scale, title="Warning Rate",
-        #         columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"])

@@ -13,8 +13,8 @@ from nivo import to_percent
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
 @pytest.mark.parametrize("actor", ["Subject","Officer"])
-def test_counts(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, actor):
-    _, summary_data = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_counts(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency, actor):
+    _, summary_data = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency)
     
     other = "subject" if actor=="Officer" else "officer"
@@ -35,8 +35,8 @@ def test_counts(df_gt, df_dash, population, selected_reason, selected_time, sele
 @pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
-def test_rates(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency):
-    _, summary_data = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_rates(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency):
+    _, summary_data = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 
     df_all = df_all[df_all['Month']>='2021-07']
@@ -68,8 +68,8 @@ def test_rates(df_gt, df_dash, population, selected_reason, selected_time, selec
 @pytest.mark.parametrize("outcome",["ALL", "NON-ARRESTS"])
 @pytest.mark.parametrize('selected_scale', ["Monthly","Quarterly","Annually"])
 @pytest.mark.parametrize("actor",['Subject','Officer'])
-def test_rates_by_time(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, outcome, selected_scale, actor):
-    time_data = data.get_timelines(df_dash, population, selected_reason, selected_time, selected_gender, 
+def test_rates_by_time(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency, outcome, selected_scale, actor):
+    time_data = data.get_timelines(df_dash, db_population, selected_reason, selected_time, selected_gender, 
                                    selected_residency, selected_scale)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 
@@ -95,8 +95,8 @@ def test_rates_by_time(df_gt, df_dash, population, selected_reason, selected_tim
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
 @pytest.mark.parametrize('uof_type',["By Officer Only","By Officer Total","By Subject Only","By Subject Total","By Subject and Officer"])
-def test_outcomes_by_uof(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, uof_type):
-    _, summary_data = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_outcomes_by_uof(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency, uof_type):
+    _, summary_data = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 
     df_all = df_all[df_all['Month']>='2021-07']

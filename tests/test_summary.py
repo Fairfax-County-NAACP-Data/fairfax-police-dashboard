@@ -11,8 +11,8 @@ import data
 @pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
-def test_total_stops(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency):
-    scard, _ = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_total_stops(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency):
+    scard, _ = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency)    
 
     assert len(df_all)>0
@@ -22,13 +22,13 @@ def test_total_stops(df_gt, df_dash, population, selected_reason, selected_time,
 @pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
-def test_stops_per_1000(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency):
-    scard, _ = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_stops_per_1000(df_gt, df_dash, db_population, gt_population, selected_reason, selected_time, selected_gender, selected_residency):
+    scard, _ = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, num_months = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency)    
 
     assert len(df_all)>0
     vc = df_all[re_col].value_counts()
-    vc = (vc / population)[vc.index] * 1000 / num_months * 12
+    vc = (vc / gt_population)[vc.index] * 1000 / num_months * 12
     vc = vc.astype('Float64')
     col = 'Stops per 1000 People^'
     assert set(vc.index)==set(scard[col].index)
@@ -39,8 +39,8 @@ def test_stops_per_1000(df_gt, df_dash, population, selected_reason, selected_ti
 @pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
-def test_arrest_rate(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency):
-    scard, _ = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_arrest_rate(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency):
+    scard, _ = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency)    
 
     assert len(df_all)>0    
@@ -54,8 +54,8 @@ def test_arrest_rate(df_gt, df_dash, population, selected_reason, selected_time,
 @pytest.mark.parametrize("selected_gender", ["ALL","MALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
 @pytest.mark.parametrize('col',['Search Rate','Search Rate (Non-Arrests Only)*'])
-def test_search_rate(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, col):
-    scard, _ = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_search_rate(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency, col):
+    scard, _ = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency)
     
     if "Non-Arrests" in col:
@@ -77,8 +77,8 @@ def test_search_rate(df_gt, df_dash, population, selected_reason, selected_time,
 @pytest.mark.parametrize("selected_time", ["ALL","MOST RECENT YEAR", 2021])
 @pytest.mark.parametrize("selected_gender", ["ALL","MALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
-def test_uof_rate(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency):
-    scard, _ = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_uof_rate(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency):
+    scard, _ = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency)
 
     df_all = df_all[df_all["Month"]>="2021-07"]

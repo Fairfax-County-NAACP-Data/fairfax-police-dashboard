@@ -13,8 +13,8 @@ from nivo import to_percent
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
 @pytest.mark.parametrize("outcome",["ALL", "NON-ARRESTS"])
-def test_counts(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, outcome):
-    _, summary_data = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_counts(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency, outcome):
+    _, summary_data = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 
     if outcome=="NON-ARRESTS":
@@ -27,8 +27,8 @@ def test_counts(df_gt, df_dash, population, selected_reason, selected_time, sele
     match_person_only = (df_all['person_searched']=="YES") & ~(df_all['vehicle_searched']=="YES")
     match_vehicle_only = ~(df_all['person_searched']=="YES") & (df_all['vehicle_searched']=="YES")
     vc = pd.DataFrame({
-        "Person":df_all[match_person_only].value_counts(re_col),
-        "Vehicle":df_all[match_vehicle_only].value_counts(re_col),
+        "Person Only":df_all[match_person_only].value_counts(re_col),
+        "Vehicle Only":df_all[match_vehicle_only].value_counts(re_col),
         "Both":df_all[match_both].value_counts(re_col)
     }).transpose().fillna(0)
 
@@ -42,8 +42,8 @@ def test_counts(df_gt, df_dash, population, selected_reason, selected_time, sele
 @pytest.mark.parametrize("selected_gender", ["ALL","FEMALE"])
 @pytest.mark.parametrize("selected_residency", ["ALL","RESIDENT OF CITY/COUNTY OF STOP"])
 @pytest.mark.parametrize("outcome",["ALL", "NON-ARRESTS"])
-def test_rates(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, outcome):
-    _, summary_data = data.get_summary_stats(df_dash, population, selected_reason, selected_time, selected_gender, selected_residency)
+def test_rates(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency, outcome):
+    _, summary_data = data.get_summary_stats(df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 
     if outcome=="NON-ARRESTS":
@@ -59,8 +59,8 @@ def test_rates(df_gt, df_dash, population, selected_reason, selected_time, selec
     match_person_only = (df_all['person_searched']=="YES") & ~(df_all['vehicle_searched']=="YES")
     match_vehicle_only = ~(df_all['person_searched']=="YES") & (df_all['vehicle_searched']=="YES")
     vc = pd.DataFrame({
-        "Person":df_all[match_person_only].value_counts(re_col).divide(df_all.value_counts(re_col),fill_value=0),
-        "Vehicle":df_all[match_vehicle_only].value_counts(re_col).divide(df_all.value_counts(re_col),fill_value=0),
+        "Person Only":df_all[match_person_only].value_counts(re_col).divide(df_all.value_counts(re_col),fill_value=0),
+        "Vehicle Only":df_all[match_vehicle_only].value_counts(re_col).divide(df_all.value_counts(re_col),fill_value=0),
         "Both":df_all[match_both].value_counts(re_col).divide(df_all.value_counts(re_col),fill_value=0),
         "Total":df_all[match_either].value_counts(re_col).divide(df_all.value_counts(re_col),fill_value=0)
     }).transpose().fillna(0)
@@ -78,8 +78,8 @@ def test_rates(df_gt, df_dash, population, selected_reason, selected_time, selec
 @pytest.mark.parametrize("outcome",["ALL", "NON-ARRESTS"])
 @pytest.mark.parametrize('selected_scale', ["Monthly","Quarterly","Annually"])
 @pytest.mark.parametrize("selected_type",['All', 'Person Only', 'Vehicle Only', 'Both Only'])
-def test_rates_by_time(df_gt, df_dash, population, selected_reason, selected_time, selected_gender, selected_residency, outcome, selected_scale, selected_type):
-    time_data = data.get_timelines(df_dash, population, selected_reason, selected_time, selected_gender, 
+def test_rates_by_time(df_gt, df_dash, db_population, selected_reason, selected_time, selected_gender, selected_residency, outcome, selected_scale, selected_type):
+    time_data = data.get_timelines(df_dash, db_population, selected_reason, selected_time, selected_gender, 
                                    selected_residency, selected_scale)
     df_all, _ = filter_df(df_gt, selected_reason, selected_time, selected_gender, selected_residency) 
 

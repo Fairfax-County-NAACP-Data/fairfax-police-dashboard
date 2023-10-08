@@ -11,10 +11,15 @@ default_logger.setLevel(logging.CRITICAL)
 
 _SUBTRACT_ARRESTS = True
 
+re_replacements = {
+            "BLACK OR AFRICAN AMERICAN":"BLACK",
+            'ASIAN OR NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER':"ASIAN/PACIFIC ISLANDER",
+            'AMERICAN INDIAN OR ALASKA NATIVE':"Indigenous".upper()
+        }
+
 def get_population():
     # TODO: Create population table that can be broken down by age and gender
     df = load_csv('FairfaxCountyPopulation.csv',index_col="Race/Ethnicity")
-    df = df.rename(index={'AAPI':"ASIAN/PACIFIC ISLANDER"})
     return df["Population"]
 
 def get_data(source_name="Virginia", table_type="STOPS", agency="Fairfax County Police Department"):
@@ -45,10 +50,14 @@ def get_data(source_name="Virginia", table_type="STOPS", agency="Fairfax County 
     except:
         pass
 
+    for k in data.keys():
+        logger.debug(f"BEFORE: {data[k]['gender'].unique()}")
+        data[k]['gender'] = data[k]['gender'].fillna("MISSING")
+        logger.debug(f"AFTER: {data[k]['gender'].unique()}")
     return data
 
 @st.cache_data(show_spinner=False)
-def _getdates(data, selected_residency, date_key='result'):
+def getdates(data, selected_residency, date_key='result'):
     min_date = data[date_key]["Month"].min()
     max_date = data[date_key]["Month"].max()
     min_residency_date = data[date_key][data[date_key]['residency'].notnull()]["Month"].min()
@@ -65,18 +74,30 @@ def _filterdata_time(data, period, gender, residency):
 def _filterdata_summary(data, period, gender, residency):
     return _filterdata(data, period, gender, residency)
 
+def get_date_range(period, min_date=None, max_date=None, data=None, residency=None):
+    if min_date is None or max_date is None:
+        min_date, max_date = getdates(data, residency)
+
+    if period == "ALL":
+        pass
+    elif period == "MOST RECENT YEAR":
+        min_date = max(min_date, max_date-12+1)
+    else:
+        min_date = max(min_date, pd.Period(period, "M"))
+        max_date = min(max_date, pd.Period(period, "M")+12-1)
+
+    return min_date, max_date
+
 def _filterdata(data, period, gender, residency):
-    min_date, max_date = _getdates(data, residency)
+    min_date, max_date = getdates(data, residency)
     result = {}
     for key in data.keys():
+        min_date, max_date = get_date_range(period, min_date, max_date)
         if period == "ALL":
             df = data[key]
         elif period == "MOST RECENT YEAR":
-            min_date = max(min_date, max_date-12+1)
             df = data[key][data[key]["Month"]>=min_date]
         else:
-            min_date = max(min_date, pd.Period(period, "M"))
-            max_date = min(max_date, pd.Period(period, "M")+12-1)
             df = data[key][data[key]["Month"].dt.year==period]
 
         if key=='result':
@@ -215,21 +236,21 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
     result['Outcomes'] = sum_actions(df_filt['result'])
     result['Total Stops'] = sum_by_race(df_filt['result'])
     total_stops_cpa_update = sum_by_race(df_filt['result'][df_filt['result']["Month"]>="2021-07"])
-    result['Search Counts'] = pd.DataFrame({"Person":sum_by_race(df_filt['person_searched_only']),
-                                            "Vehicle":sum_by_race(df_filt['vehicle_searched_only']),
+    result['Search Counts'] = pd.DataFrame({"Person Only":sum_by_race(df_filt['person_searched_only']),
+                                            "Vehicle Only":sum_by_race(df_filt['vehicle_searched_only']),
                                             "Both":sum_by_race(df_filt['both_searched'])}).transpose()
     search_rate_total = sum_by_race(df_filt['All Searches']).divide(result['Total Stops'], fill_value=0)
-    result['Search Rates'] = pd.DataFrame({"Person":result['Search Counts'].loc["Person"].divide(result['Total Stops'], fill_value=0),
-                                            "Vehicle":result['Search Counts'].loc["Vehicle"].divide(result['Total Stops'], fill_value=0),
+    result['Search Rates'] = pd.DataFrame({"Person Only":result['Search Counts'].loc["Person Only"].divide(result['Total Stops'], fill_value=0),
+                                            "Vehicle Only":result['Search Counts'].loc["Vehicle Only"].divide(result['Total Stops'], fill_value=0),
                                             "Both":result['Search Counts'].loc["Both"].divide(result['Total Stops'], fill_value=0),
                                             "Total":search_rate_total}).transpose()
-    result['Search Counts NA'] = pd.DataFrame({"Person":sum_by_race(df_filt['person_searched_only_na']),
-                                            "Vehicle":sum_by_race(df_filt['vehicle_searched_only_na']),
+    result['Search Counts NA'] = pd.DataFrame({"Person Only":sum_by_race(df_filt['person_searched_only_na']),
+                                            "Vehicle Only":sum_by_race(df_filt['vehicle_searched_only_na']),
                                             "Both":sum_by_race(df_filt['both_searched_na'])}).transpose()
     total_stop_na = sum_by_race(df_filt['result'][df_filt['result']['action_taken']!="ARREST"]) if _SUBTRACT_ARRESTS else result['Total Stops']
     search_rate_total_na = sum_by_race(df_filt['All Searches NA']).divide(total_stop_na, fill_value=0)
-    result['Search Rates NA'] = pd.DataFrame({"Person":result['Search Counts NA'].loc["Person"].divide(total_stop_na, fill_value=0),
-                                            "Vehicle":result['Search Counts NA'].loc["Vehicle"].divide(total_stop_na, fill_value=0),
+    result['Search Rates NA'] = pd.DataFrame({"Person Only":result['Search Counts NA'].loc["Person Only"].divide(total_stop_na, fill_value=0),
+                                            "Vehicle Only":result['Search Counts NA'].loc["Vehicle Only"].divide(total_stop_na, fill_value=0),
                                             "Both":result['Search Counts NA'].loc["Both"].divide(total_stop_na, fill_value=0),
                                             "Total":search_rate_total_na}).transpose()
     result['Subject UoF Counts'] = pd.DataFrame({"By Subject Only":sum_by_race(df_filt['uof_subject_only']),
@@ -267,6 +288,63 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
     return df_result, result
 
 
+def download_population(agency, logger=default_logger):
+    # 2023 CPA report:
+    # https://www.dcjs.virginia.gov/sites/dcjs.virginia.gov/files/publications/research/report-analysis-traffic-stop-data-fiscal-year-2023.pdf
+
+    # Populations used based on this link per appendix I
+    all_pop = pd.read_csv(r"https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/asrh/cc-est2021-alldata-51.csv")
+
+    locale = agency.replace("Police Department","").replace("Sheriff's Department","").replace("Sheriff's Office","").strip()
+
+    pop = all_pop[all_pop["CTYNAME"]==locale]
+
+    if not len(pop):
+        raise ValueError(f"Population data for location {locale} and agency {agency} not found")
+
+    # Per Appendix I: "The four youngest age groups—together spanning ages 0-14—were dropped 
+    # from the benchmark estimates, leaving a driving-age sample of individuals ages 15 and older."
+    # Remove age groups 0-3
+    pop = pop[pop['AGEGRP']>3]
+
+    # Appendix I: Estimates for 2021 were used
+    # Per https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2020-2022/cc-est2022-alldata.pdf
+    # The key for the YEAR variable is as follows: 
+    # 1 = 4/1/2020 population estimates base 
+    # 2 = 7/1/2020 population estimate 
+    # 3 = 7/1/2021 population estimate
+    # 4 = 7/1/2022 population estimate 
+    pop = pop[pop["YEAR"]==3]
+
+    # Add up across age groups
+    pop = pop.sum()
+
+    # Calculations based on Table I-1 in Appendix I
+    cpa_labels = ["WHITE", "BLACK", 'INDIGENOUS', 
+            'ASIAN/PACIFIC ISLANDER', 
+            'LATINO' ]
+    census_labels = [['NHWA'], ['NHBA'], ['NHIA'], ['NHAA', 'NHNA'], ['H']]
+
+    # Convert to upper case 
+    cpa_labels = [x.upper() for x in cpa_labels]
+
+    for k in range(len(cpa_labels)):
+        pop[cpa_labels[k]] = pop[census_labels[k][0]+"_MALE"] + pop[census_labels[k][0]+"_FEMALE"]
+        for j in range(len(census_labels[k])-1):
+            pop[cpa_labels[k]] += pop[census_labels[k][j+1]+"_MALE"] + pop[census_labels[k][j+1]+"_FEMALE"]
+
+    total = pop["TOT_POP"]
+
+    # Only keep CPA labels that were added
+    pop = pop[cpa_labels]
+    pop['OTHER'] = total - pop.sum()
+
+    pop.index.name = "Race/Ethnicity"
+    pop.name = 'Population'
+
+    return pop
+
+
 def download_data(source_name, table_type, agency, start_date="2020-01-01", logger=default_logger):
     # TODO: Add age group
 
@@ -292,11 +370,7 @@ def download_data(source_name, table_type, agency, start_date="2020-01-01", logg
         df = pd.concat(df)
         df["Month"] = df["incident_date"].dt.to_period("M")
         df["Quarter"] = df["incident_date"].dt.to_period("Q")
-        df["Race/Ethnicity"] = df["race"].replace({
-            "BLACK OR AFRICAN AMERICAN":"BLACK",
-            'ASIAN OR NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER':"ASIAN/PACIFIC ISLANDER",
-            'AMERICAN INDIAN OR ALASKA NATIVE':"Indigenous".upper()
-        }).str.upper()
+        df["Race/Ethnicity"] = df["race"].replace(re_replacements).str.upper()
 
         eth = [x for x in df["ethnicity"].unique() if "HISPANIC" in x and not x.upper().startswith("NOT")]
         if len(eth)!=1:
@@ -337,6 +411,9 @@ def load_csv(csv_filename, *args, **kwargs):
 
 
 def update_saved_data(source_name, table_type, agency, start_date="2020-01-01", logger=default_logger):
+    population = download_population(agency)
+    population.to_csv(rf"../fcpd-data/data/FairfaxCountyPopulation.csv", index=True)
+
     data = download_data(source_name, table_type, agency, start_date, logger)
     for k,v in data.items():
         v.to_csv(rf"../fcpd-data/data/{source_name}_{agency}_{table_type}_{k}.csv", index=False)
