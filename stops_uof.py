@@ -4,6 +4,8 @@ import nivo
 import data
 import streamlit_elements
 
+logger = st.session_state['logger']
+
 def stops_uof_dashboard(police_data, population, selected_races,
                             selected_reason, selected_time_stats, selected_time_series, selected_gender, selected_residency, 
                             selected_scale,
@@ -49,6 +51,12 @@ def stops_uof_dashboard(police_data, population, selected_races,
     
     if not no_data:
       selectedUoF = st.selectbox("Use of Force", summary_data['Uof Outcomes'].keys())
+      for k in ['use of force type']:
+        v = selectedUoF
+        if k in st.session_state and st.session_state[k]!=v:
+            logger.info(f"Value of filter {k} changed to {v}")
+    
+        st.session_state[k] = v
       with streamlit_elements.elements('stops_uof2'):
           nivo.bar(summary_data['Uof Outcomes'][selectedUoF],
                   title=f"Outcomes of Stops Where Use of Force Occurs: {date_range}", stacked=True, ylabel="Subject Race",

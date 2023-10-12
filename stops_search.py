@@ -3,6 +3,8 @@ import nivo
 import data
 import streamlit_elements
 
+logger = st.session_state['logger']
+
 def stops_search_dashboard(police_data, population, selected_races,
                             selected_reason, selected_time_stats, selected_time_series, selected_gender, selected_residency, 
                             selected_scale,
@@ -29,6 +31,13 @@ def stops_search_dashboard(police_data, population, selected_races,
     
     with col2:
         selected_type = st.selectbox("Filter by Search Type", time_data['Search Rate'].keys())
+
+    for k in ['result of stop', 'search type']:
+        v = selected_outcome if k=='result of stop' else selected_type
+        if k in st.session_state and st.session_state[k]!=v:
+            logger.info(f"Value of filter {k} changed to {v}")
+    
+        st.session_state[k] = v
     
     if selected_outcome=="ALL":
         addon = ""
