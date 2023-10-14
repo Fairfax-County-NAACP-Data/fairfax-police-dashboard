@@ -37,9 +37,9 @@ def test_total_stops(df_gt, df_dash, db_population, gt_population, selected_reas
     assert pcent.to_dict() == vc_perc.to_dict()
 
     stop_rate = (vc / gt_population)[vc.columns] * 1000 * scale
-    assert (stop_rate.columns==plot_data['Stops per 1000 People^'].columns).all()
-    assert (stop_rate.index==plot_data['Stops per 1000 People^'].index).all()
+    assert (stop_rate.columns==plot_data['Stops per 1000 People'].columns).all()
+    assert (stop_rate.index==plot_data['Stops per 1000 People'].index).all()
     for col in stop_rate.columns:
-        assert (stop_rate[col].convert_dtypes().round(4)==plot_data['Stops per 1000 People^'][col].round(4)).all() or \
-            (plot_data['Stops per 1000 People^'][col].isnull().all() and \
+        assert (stop_rate[col].convert_dtypes().round(4)==plot_data['Stops per 1000 People'][col].round(4)).all() or \
+            (plot_data['Stops per 1000 People'][col].isnull().all() and \
              stop_rate[col].isnull().all())

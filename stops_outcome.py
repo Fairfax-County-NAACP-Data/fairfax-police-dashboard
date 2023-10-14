@@ -25,7 +25,9 @@ def stops_outcome_dashboard(police_data, population, selected_races,
         nivo.bar(summary_data['Outcomes'], title=f"Result of Stop: {date_range}",
                 percent=True, stacked=True, columns=selected_races, layout='horizontal', _debug=_debug)
         nivo.plot(time_data['Arrest Rate'], ylabel=f"Arrest Rate", time_scale=selected_scale, 
-                  title="ARREST RATE: % of stops that end in arrest",
+                  title="Arrest Rate", help="Percent of stops that end in arrest",
                 columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"])
         nivo.plot(time_data['Warning Rate'], ylabel="Warning Rate", time_scale=selected_scale, title="Warning Rate",
-                columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"])
+                columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"],
+                help="Percent of stops that end in a warning. A high warning rate could indicate leniency or that people are being stopped for "+
+                "low-level offenses, possibly as a pretext to try to find higher-level offenses after the stop is made.")
