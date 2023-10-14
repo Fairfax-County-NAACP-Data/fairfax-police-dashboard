@@ -18,19 +18,22 @@ def stops_summary_dashboard(police_data, population, selected_races,
     if isinstance(scard, str):
         st.error(scard)
     else:
+        def getmax(x, type=float):
+            return type(x.max()) if (x.notnull() & (x>0)).any() else 1
+
         stops_per_1000_max = float(scard['Stops per 1000 People'].max())
-        stops_per_1000_format = max(1,math.ceil(-math.log10(stops_per_1000_max)))
+        stops_per_1000_format = max(1,math.ceil(-math.log10(stops_per_1000_max))) if stops_per_1000_max!=0 and pd.notnull(stops_per_1000_max) else 1
         column_config={
                 "Total Stops": st.column_config.ProgressColumn(
                     format="%d",
                     min_value=0,
-                    max_value=int(scard['Total Stops'].max()),
+                    max_value=getmax(scard['Total Stops'],int),
                     help="Total number of stops for each group in the selected period"
                 ),
                 "Stops per 1000 People": st.column_config.ProgressColumn(
                     format=f"%0.{stops_per_1000_format}f",
                     min_value=0,
-                    max_value=float(scard['Stops per 1000 People'].max()),
+                    max_value=getmax(scard['Stops per 1000 People']),
                     help=stops_per_1000_txt
                 )
             }
@@ -41,10 +44,9 @@ def stops_summary_dashboard(police_data, population, selected_races,
                 "Officer Use of Force Rate":"Percent of stops where an officer uses force",
                 }
         for k in range(2, len(scard.columns)):
-            mx = float(scard[scard.columns[k]].max()) if (scard[scard.columns[k]].notnull() & (scard[scard.columns[k]]>0)).any() else 1
             column_config[scard.columns[k]] = st.column_config.ProgressColumn(
                     min_value=0,
-                    max_value=mx,
+                    max_value=getmax(scard[scard.columns[k]]),
                     format="%0.1f%%",
                     help=help[scard.columns[k]] if scard.columns[k] in help else None
                 )
@@ -60,27 +62,28 @@ def stops_summary_dashboard(police_data, population, selected_races,
         disparity_thresh = 1.2
 
         highest_rate = scard.loc[selected_races]["Stops per 1000 People"].idxmax()
-        msg = f'{highest_rate} individuals were stopped at a rate of {scard.loc[highest_rate]["Stops per 1000 People"]:.{stops_per_1000_format}f} stops'
-        if selected_reason != "ALL":
-            msg += f" for {selected_reason}"
-        msg+=f' per 1000 people (relative to Fairfax Co. population).'
-        if highest_rate!="WHITE":
-            st.info(msg+f' This is {scard.loc[highest_rate]["Stops per 1000 People"]/scard.loc["WHITE"]["Stops per 1000 People"]:.1f} '+
-                        'times higher than the rate for WHITE individuals.')
-            for x in selected_races:
-                if x!=highest_rate and pd.notnull(scard.loc[x]["Stops per 1000 People"]) and \
-                    scard.loc[x]["Stops per 1000 People"]/scard.loc["WHITE"]["Stops per 1000 People"]>disparity_thresh:
-                    msg = f'{x} individuals were stopped at a rate of {scard.loc[x]["Stops per 1000 People"]:.{stops_per_1000_format}f} stops'
-                    if selected_reason != "ALL":
-                        msg += f" for {selected_reason}"
-                    msg+=f' per 1000 people (relative to Fairfax Co. population).'
-                    st.info(msg+f' This is {scard.loc[x]["Stops per 1000 People"]/scard.loc["WHITE"]["Stops per 1000 People"]:.1f} '+
-                        'times higher than the rate for WHITE individuals.')
-        else:
-            st.info(msg)
+        if pd.notnull(scard.loc[selected_races]["Stops per 1000 People"][highest_rate]) and scard.loc[selected_races]["Stops per 1000 People"][highest_rate]>0:
+            msg = f'{highest_rate} individuals were stopped at a rate of {scard.loc[highest_rate]["Stops per 1000 People"]:.{stops_per_1000_format}f} stops'
+            if selected_reason != "ALL":
+                msg += f" for {selected_reason}"
+            msg+=f' per 1000 people (relative to Fairfax Co. population).'
+            if highest_rate!="WHITE":
+                st.info(msg+f' This is {scard.loc[highest_rate]["Stops per 1000 People"]/scard.loc["WHITE"]["Stops per 1000 People"]:.1f} '+
+                            'times higher than the rate for WHITE individuals.')
+                for x in selected_races:
+                    if x!=highest_rate and pd.notnull(scard.loc[x]["Stops per 1000 People"]) and \
+                        scard.loc[x]["Stops per 1000 People"]/scard.loc["WHITE"]["Stops per 1000 People"]>disparity_thresh:
+                        msg = f'{x} individuals were stopped at a rate of {scard.loc[x]["Stops per 1000 People"]:.{stops_per_1000_format}f} stops'
+                        if selected_reason != "ALL":
+                            msg += f" for {selected_reason}"
+                        msg+=f' per 1000 people (relative to Fairfax Co. population).'
+                        st.info(msg+f' This is {scard.loc[x]["Stops per 1000 People"]/scard.loc["WHITE"]["Stops per 1000 People"]:.1f} '+
+                            'times higher than the rate for WHITE individuals.')
+            else:
+                st.info(msg)
 
         highest_rate = scard.loc[selected_races]["Arrest Rate"].idxmax()
-        if highest_rate!='WHITE' and scard.loc[selected_races]["Arrest Rate"][highest_rate]>0:
+        if highest_rate!='WHITE' and pd.notnull(highest_rate) and scard.loc[selected_races]["Arrest Rate"][highest_rate]>0:
             msg = f'{highest_rate} individuals were arrested in {scard.loc[highest_rate]["Arrest Rate"]:.1f}% of stops'
             if selected_reason != "ALL":
                 msg += f" for a {selected_reason}"
@@ -98,7 +101,7 @@ def stops_summary_dashboard(police_data, population, selected_races,
                 st.info(msg)
 
         highest_rate = scard.loc[selected_races]["Search Rate (Non-Arrests Only)"].idxmax()
-        if highest_rate!='WHITE' and \
+        if highest_rate!='WHITE' and pd.notnull(highest_rate) and\
             scard.loc[selected_races]["Search Rate (Non-Arrests Only)"][highest_rate]>0:
             msg = f'{highest_rate} individuals were searched in {scard.loc[highest_rate]["Search Rate (Non-Arrests Only)"]:.1f}% of stops where the individual was not arrested'
             if selected_reason != "ALL":

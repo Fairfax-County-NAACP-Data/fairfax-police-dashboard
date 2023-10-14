@@ -241,7 +241,7 @@ def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='month
     axisBottom = {'legend': xlabel,
                 'legendOffset': 36,
                 'legendPosition': 'middle'}
-    if isinstance(v.index.dtype, pd.PeriodDtype):
+    if isinstance(data.index.dtype, pd.PeriodDtype):
         xscale['type'] = 'time'
         xscale['format'] = time_format
         if "quarter" in time_scale:

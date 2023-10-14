@@ -257,10 +257,10 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
                                             "Total":search_rate_total_na}).transpose()
     result['Subject UoF Counts'] = pd.DataFrame({"By Subject Only":sum_by_race(df_filt['uof_subject_only']),
                                             "By Subject and Officer":sum_by_race(df_filt['uof_both']),
-                                            }).transpose()
+                                            }).transpose().astype('float64')
     result['Officer UoF Counts'] = pd.DataFrame({"By Officer Only":sum_by_race(df_filt['uof_officer_only']),
                                             "By Subject and Officer":sum_by_race(df_filt['uof_both']),
-                                            }).transpose()
+                                            }).transpose().astype('float64')
     subject_uof_rate_total = sum_by_race(df_filt['All UoF Subject']).divide(total_stops_cpa_update, fill_value=0)
     officer_uof_rate_total = sum_by_race(df_filt['All UoF Officer']).divide(total_stops_cpa_update, fill_value=0)
     result['UoF Rates'] = pd.DataFrame({"By Officer Only":result['Officer UoF Counts'].loc["By Officer Only"].divide(total_stops_cpa_update, fill_value=0),
