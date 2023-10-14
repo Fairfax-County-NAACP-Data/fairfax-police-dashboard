@@ -3,8 +3,9 @@ import pandas as pd
 import nivo
 import data
 import streamlit_elements
+from streamlit_logger import get_logger
 
-logger = st.session_state['logger']
+logger = get_logger(level='DEBUG')
 
 def stops_uof_dashboard(police_data, population, selected_races,
                             selected_reason, selected_time_stats, selected_time_series, selected_gender, selected_residency, 

@@ -9,6 +9,7 @@ parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
 parser.add_argument("-t", "--time", action='store', default=None)
 parser.add_argument("-r", "--reason", action='store', default=None)
+parser.add_argument("-g", "--gender", action='store', default=None)
 parser.add_argument("-res", "--res", action='store', default=None)
 args = parser.parse_args()
 
@@ -24,7 +25,7 @@ from stops_outcome import stops_outcome_dashboard
 from stops_search import stops_search_dashboard
 from stops_uof import stops_uof_dashboard
 from filters import add_filters
-from streamlit_logger import create_logger, get_remote_ip
+from streamlit_logger import get_logger, get_remote_ip
 import data
 
 import openpolicedata as opd
@@ -48,9 +49,7 @@ st.set_page_config(
     }
 )
 
-if 'logger' not in st.session_state:
-    st.session_state['logger'] = create_logger(name = 'opd-app', level = 'DEBUG')
-logger = st.session_state['logger']
+logger = get_logger(level='DEBUG')
 
 logger.info(datetime.now())
 logger.info("VERSIONS:")
@@ -85,6 +84,8 @@ if args.time:
     filters['time stats'] = int(args.time) if args.time.isdigit() else args.time
 if args.reason:
     filters['reason'] = args.reason
+if args.gender:
+    filters['gender'] = args.gender
 if args.res:
     filters['residency'] = args.res
 

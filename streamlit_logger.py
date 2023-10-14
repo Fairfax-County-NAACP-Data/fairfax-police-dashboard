@@ -1,4 +1,5 @@
 import logging
+import streamlit as st
 from streamlit import runtime
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 
@@ -18,8 +19,13 @@ def get_remote_ip() -> str:
 
     return session_info.request.remote_ip
 
+def get_logger(*args, **kwargs):
+    if 'logger' not in st.session_state:
+        st.session_state['logger'] = create_logger(*args, **kwargs)
+    return st.session_state['logger']
+
 # https://discuss.streamlit.io/t/streamlit-duplicates-log-messages-when-stream-handler-is-added/16426/4
-def create_logger(name, level=logging.INFO, file=None, addtime=False):
+def create_logger(name='opd-app', level=logging.INFO, file=None, addtime=False):
     logger = logging.getLogger(name)
     logger.propagate = False
     logger.setLevel(level)
