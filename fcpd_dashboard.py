@@ -24,7 +24,7 @@ from stops_outcome import stops_outcome_dashboard
 from stops_search import stops_search_dashboard
 from stops_uof import stops_uof_dashboard
 from filters import add_filters
-from streamlit_logger import create_logger
+from streamlit_logger import create_logger, get_remote_ip
 import data
 
 import openpolicedata as opd
@@ -51,6 +51,12 @@ st.set_page_config(
 if 'logger' not in st.session_state:
     st.session_state['logger'] = create_logger(name = 'opd-app', level = 'DEBUG')
 logger = st.session_state['logger']
+
+logger.info(datetime.now())
+logger.info("VERSIONS:")
+logger.info(f"\tOpenPoliceData: {opd.__version__}")
+logger.info(f"\tDashboard: {__version__}")
+logger.info(f"IP: {get_remote_ip()}")
 
 table_type = "STOPS"
 agency = "Fairfax County Police Department"
@@ -81,6 +87,12 @@ if args.reason:
     filters['reason'] = args.reason
 if args.res:
     filters['residency'] = args.res
+
+for k,v in filters.items():
+    if k in st.session_state and st.session_state[k]!=v:
+        logger.info(f"Value of filter {k} changed to {v}")
+    
+    st.session_state[k] = v
 
 population = get_population(today)
 
@@ -124,7 +136,3 @@ st.markdown("The dashboard is generated using Community Policing Act data aggreg
             "[Virginia Open Data Portal](https://data.virginia.gov/Public-Safety/Community-Policing-Data-July-1-2020-to-June-30-202/2c96-texw). "
             "[OpenPoliceData](https://openpolicedata.readthedocs.io/) was used to load data into this dashboard " +
             "and is freely available for others to easily download the raw data.")
-
-# TODO: Add debug information including IP and information about what people are doing on the dashboard?
-logger.info(f"Dashboard version is {__version__}")
-logger.info(f'OPD version is {opd.__version__}')
