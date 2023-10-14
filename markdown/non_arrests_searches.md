@@ -1,0 +1,3 @@
+In Virginia, individuals are frequently searched *incident to an arrest* (i.e. they are searched because they are arrested not because of a choice made by an officer before the arrest). The data provides no ability to distinguish between non-discretionary searches incident to an arrest and discretionary searches. 
+
+In an attempt to provide more insight into discretionary searches, statistics are also provided that analyze searches for stops that do not end in arrest. Additionally, since no arrest occurs, these statistics also involve situtations where the search found nothing serious enough to cause the person to be arrested.

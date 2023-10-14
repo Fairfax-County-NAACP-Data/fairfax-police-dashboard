@@ -5,12 +5,11 @@ from datetime import datetime
 
 __version__ = "0.1-beta"
 
-# TODO: Add help strings
-
 parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
 parser.add_argument("-t", "--time", action='store', default=None)
 parser.add_argument("-r", "--reason", action='store', default=None)
+parser.add_argument("-res", "--res", action='store', default=None)
 args = parser.parse_args()
 
 if args.debug:
@@ -38,14 +37,14 @@ def markdown_file(file):
 
 sidebar = True
 
-# TODO: Update page_config
+# TODO: Add about menu item. Change icon?
 st.set_page_config(
     page_title="FCPD Dashboard",
-    page_icon="🌃",
-    initial_sidebar_state="expanded",
+    page_icon="📊",
+    initial_sidebar_state="auto",
     layout = 'wide',
     menu_items={
-        'Report a Bug': "https://github.com/Fairfax-County-NAACP-Data/fairfax-police-dashboard/issues"
+        'Report a Bug': "mailto:openpolicedata@gmail.com"
     }
 )
 
@@ -70,7 +69,7 @@ st.title("Fairfax County Police Department Stops Data")
 today = datetime.now().replace(hour=0, minute=0, second=0,microsecond=0)
 with st.empty():
     police_data = get_data(today)
-    st.markdown("Welcome to Fairfax County XXXXX's dashboard on traffic and other types of police stops by the Fairfax County Police Department. "+
+    st.markdown("Welcome to Fairfax County XXXXX's dashboard on traffic and pedestrian stops by the Fairfax County Police Department. "+
             "See the `About` section for more information about police stops and the data. See the `Help` section for the basics on navigating "+
             "this dashboard.")
 
@@ -78,9 +77,10 @@ filters = add_filters(police_data, sidebar=sidebar)
 
 if args.time:
     filters['time stats'] = int(args.time) if args.time.isdigit() else args.time
-
 if args.reason:
     filters['reason'] = args.reason
+if args.res:
+    filters['residency'] = args.res
 
 population = get_population(today)
 
@@ -120,10 +120,10 @@ with tab7:
     markdown_file(r"./markdown/help.md")
 
 st.divider()
-st.markdown("Dashboard is generated using Community Policing Act data aggregated by the Virginia State Police. It can be accessed from the "+
+st.markdown("The dashboard is generated using Community Policing Act data aggregated by the Virginia State Police. The raw data can be accessed from the "+
             "[Virginia Open Data Portal](https://data.virginia.gov/Public-Safety/Community-Policing-Data-July-1-2020-to-June-30-202/2c96-texw). "
             "[OpenPoliceData](https://openpolicedata.readthedocs.io/) was used to load data into this dashboard " +
-            "and can be easily used to download the raw data.")
+            "and is freely available for others to easily download the raw data.")
 
 # TODO: Add debug information including IP and information about what people are doing on the dashboard?
 logger.info(f"Dashboard version is {__version__}")

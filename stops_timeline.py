@@ -2,6 +2,7 @@ import streamlit as st
 import nivo
 import data
 import streamlit_elements
+from util import stops_per_1000_txt
 
 def stops_rate_dashboard(police_data, population, selected_races,
                             selected_reason, selected_time, selected_gender, selected_residency,
@@ -19,6 +20,7 @@ def stops_rate_dashboard(police_data, population, selected_races,
         nivo.plot(plot_data['Total Stops by Race'], ylabel="# of Stops", time_scale=selected_scale, title="Number of Stops",
                 columns=selected_races, _debug=_debug)
         nivo.plot(plot_data['Total Stops by Race'], ylabel=r"% of Stops", time_scale=selected_scale, title="Number of Stops (%)",
-                percent=True, columns=selected_races, _debug=_debug)
-        nivo.plot(plot_data['Stops per 1000 People^'], ylabel="# of Stops", time_scale=selected_scale, title="Stops per 1000 People^",
-                columns=selected_races, _debug=_debug, yformat=".1f")
+                percent=True, columns=selected_races, _debug=_debug, help="Percentage of stops out of the total number of stops")
+        nivo.plot(plot_data['Stops per 1000 People'], ylabel="# of Stops", time_scale=selected_scale, title="Stops per 1000 People",
+                columns=selected_races, _debug=_debug, yformat=".1f",
+                help=stops_per_1000_txt)

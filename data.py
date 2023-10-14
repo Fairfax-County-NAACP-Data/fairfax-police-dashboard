@@ -51,9 +51,8 @@ def get_data(source_name="Virginia", table_type="STOPS", agency="Fairfax County 
         pass
 
     for k in data.keys():
-        logger.debug(f"BEFORE: {data[k]['gender'].unique()}")
         data[k]['gender'] = data[k]['gender'].fillna("MISSING")
-        logger.debug(f"AFTER: {data[k]['gender'].unique()}")
+        
     return data
 
 @st.cache_data(show_spinner=False)
@@ -162,13 +161,16 @@ def get_timelines(data, population, reason_for_stop, period, gender, residency, 
             return df.groupby([scale_col,'Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
     else:
         def sum_by_race(df):
+            if reason_for_stop not in df:
+                df = df.copy()
+                df[reason_for_stop] = 0
             return df.groupby([scale_col,'Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
         
     result['Total Stops by Race'] = sum_by_race(df_filt['result'])
     total_arrests = sum_by_race(df_filt['result'][is_arrest])
     total_warnings = sum_by_race(df_filt['result'][df_filt['result']["action_taken"]=="WARNING ISSUED"])
 
-    result['Stops per 1000 People^'] = (result['Total Stops by Race'] / population * 1000)[result['Total Stops by Race'].columns] * 12 / months
+    result['Stops per 1000 People'] = (result['Total Stops by Race'] / population * 1000)[result['Total Stops by Race'].columns] * 12 / months
     result['Arrest Rate'] = total_arrests.divide(result['Total Stops by Race'], fill_value=0)
     result['Warning Rate'] = total_warnings.divide(result['Total Stops by Race'], fill_value=0)
     result['Search Rate'] = {"All":sum_by_race(df_filt['All Searches']).divide(result['Total Stops by Race'], fill_value=0),
@@ -268,10 +270,10 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
                                         "By Subject Total":subject_uof_rate_total,
                                         }).transpose()
 
-    result['Stops per 1000 People^'] = (result['Total Stops'] / population * 1000)[result['Total Stops'].index] * 12 / months
+    result['Stops per 1000 People'] = (result['Total Stops'] / population * 1000)[result['Total Stops'].index] * 12 / months
     result['Arrest Rate'] = sum_by_race(df_filt['result'][is_arrest]).divide(result['Total Stops'], fill_value=0) * 100
     result['Search Rate'] = search_rate_total * 100
-    result['Search Rate (Non-Arrests Only)*'] = search_rate_total_na * 100
+    result['Search Rate (Non-Arrests Only)'] = search_rate_total_na * 100
     result['Officer Use of Force Rate'] = officer_uof_rate_total * 100
 
     result['Uof Outcomes'] = {

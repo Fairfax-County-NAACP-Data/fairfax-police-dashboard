@@ -28,24 +28,31 @@ def stops_uof_dashboard(police_data, population, selected_races,
             nivo.bar(summary_data['Officer UoF Counts'],
                     title=f"Use of Force By Officer: {date_range}", stacked=True, ylabel="Subject Race",
                     columns=selected_races, layout='horizontal',_debug=_debug,
-                    yoffset=-150)
+                    yoffset=-150,
+                    xlabel="# of Stops",
+                    help="Number of stops where 1 or more officers used force")
             nivo.bar(summary_data['Subject UoF Counts'],
                     title=f"Use of Force By Subject: {date_range}", stacked=True, ylabel="Subject Race",
                     columns=selected_races, layout='horizontal',_debug=_debug,
-                    yoffset=-150)
+                    yoffset=-150,
+                    xlabel="# of Stops",
+                    help="Number of stops where 1 or more subjects used force")
             nivo.bar(summary_data['UoF Rates'],
                     title=f"Use of Force Rates: {date_range}", stacked=False,
-                    columns=selected_races, layout='vertical',_debug=_debug, label_format=[".1%",".0%"])
+                    columns=selected_races, layout='vertical',_debug=_debug, label_format=[".1%",".1%"],
+                    help="Percent of stops where an officer and/or subject used force")
     else:
         st.warning(f"Use of force data was not collected prior to {pd.Period('2021-07').strftime('%B %Y')} so some charts cannot be displayed.")
             
     with streamlit_elements.elements('stops_uof_time'):
         nivo.plot(time_data['UoF Rate']["Officer"], ylabel="Use of Force Rate", time_scale=selected_scale, 
-                title=r"Officer Use of Force Rate: % of stops that end in an officer using force",
-                columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"])
+                title=r"Officer Use of Force Rate",
+                columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"],
+                help="Percent of stops where 1 or more officers used force"),
         nivo.plot(time_data['UoF Rate']["Subject"], ylabel="Use of Force Rate", time_scale=selected_scale, 
-                title=r"Subject Use of Force Rate: % of stops that end in a subject using force",
-                columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"])
+                title=r"Subject Use of Force Rate",
+                columns=selected_races, _debug=_debug, yformat=[".0%", ".1%"],
+                help="Percent of stops where 1 or more subjects used force")
     
     if not no_data:
       selectedUoF = st.selectbox("Use of Force", summary_data['Uof Outcomes'].keys())

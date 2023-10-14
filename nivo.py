@@ -1,4 +1,4 @@
-from streamlit_elements import nivo, mui, elements
+from streamlit_elements import nivo, mui, html
 import pandas as pd
 import hashlib
 
@@ -11,7 +11,7 @@ def to_percent(data, axis):
 
 def bar(data, xlabel=None, ylabel=None, title=None, key=None, 
          stacked=True, layout='vertical', percent=False, columns=None, height=350, 
-         _debug=False, label_format=None, yoffset=32):
+         _debug=False, label_format=None, yoffset=32, help=None):
     
     if percent:
         data = to_percent(data,0)
@@ -39,7 +39,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
                 'tickRotation': 0,
                 'legend': xlabel,
                 'legendPosition': 'middle',
-                'legendOffset': -45
+                'legendOffset': 35
             }
     axis_left = {
             'tickSize': 5,
@@ -94,8 +94,12 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
                     "borderColor": "divider",
                 },
             ):
-                mui.icon.Timeline()
+                mui.icon.BarChart()
                 mui.Typography(title, sx={"flex": 1})
+                if help:
+                    with mui.Tooltip(title=html.h3(help, style={'fontSize':"16px", 'fontWeight':'normal'})):
+                        with html.span:
+                            mui.icon.HelpOutline()
     with mui.Paper(key=key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
         with mui.Box(sx={"height": height}):
             nivo.Bar(
@@ -182,7 +186,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
 
 def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='monthly', 
          stacked=False, percent=False, columns=None, colors="dark2", height=350,
-         _debug=False, yformat=None):
+         _debug=False, yformat=None, help=None):
     
     if percent:
         data = to_percent(data,1)
@@ -266,7 +270,11 @@ def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='month
                 },
             ):
                 mui.icon.Timeline()
-                mui.Typography(title, sx={"flex": 1})
+                mui.Typography(title, sx={"flex": 10})
+                if help:
+                    with mui.Tooltip(title=html.h3(help, style={'fontSize':"16px", 'fontWeight':'normal'})):
+                        with html.span:
+                            mui.icon.HelpOutline()
     with mui.Paper(key=key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
         with mui.Box(sx={"height": height}):
             nivo.Line(
