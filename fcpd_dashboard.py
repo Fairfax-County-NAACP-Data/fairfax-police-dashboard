@@ -97,7 +97,11 @@ for k,v in filters.items():
 
 population = get_population(today)
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(['Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force", "About", "Help"])
+tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(['Introduction', 'Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force", "About", "Help"])
+
+with tab0:
+    markdown_file(r"./markdown/intro.md")
+
 with tab1:
     stops_summary_dashboard(police_data, population, filters['race'],
                             filters['reason'], filters['time stats'], filters['gender'], filters['residency'])
