@@ -11,7 +11,7 @@ def to_percent(data, axis):
 
 def bar(data, xlabel=None, ylabel=None, title=None, key=None, 
          stacked=True, layout='vertical', percent=False, columns=None, height=350, 
-         _debug=False, label_format=None, yoffset=32, help=None):
+         _debug=False, label_format=None, yoffset=32, help=None, colors="category10"):
     
     if percent:
         data = to_percent(data,0)
@@ -111,7 +111,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
                     valueFormat=yformat,
                     layout=layout,
                     indexScale={ 'type': 'band', 'round': True },
-                    colors={ 'scheme': 'nivo' },
+                    colors={ 'scheme': colors },
                     defs=[
                         {
                             'id': 'dots',
@@ -185,7 +185,7 @@ def bar(data, xlabel=None, ylabel=None, title=None, key=None,
 
 
 def plot(data, xlabel=None, ylabel=None, title=None, key=None, time_scale='monthly', 
-         stacked=False, percent=False, columns=None, colors="dark2", height=350,
+         stacked=False, percent=False, columns=None, colors="category10", height=350,
          _debug=False, yformat=None, help=None):
     
     if percent:
