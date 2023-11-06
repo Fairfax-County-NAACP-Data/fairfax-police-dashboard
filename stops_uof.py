@@ -60,15 +60,15 @@ def stops_uof_dashboard(police_data, population, selected_races,
     
     if not no_data:
       uof_data = summary_data['Uof Outcomes'].keys()
-      selectedUoF = st.selectbox("Use of Force", uof_data, index=_get_index("uof_type", uof_data))
+      st.session_state['filters']['uof_type'] = st.selectbox("Use of Force", uof_data, index=_get_index("uof_type", uof_data))
       for k in ['use of force type']:
-        v = selectedUoF
+        v = st.session_state['filters']['uof_type']
         if k in st.session_state and st.session_state[k]!=v:
             logger.info(f"Value of filter {k} changed to {v}")
     
         st.session_state[k] = v
       with streamlit_elements.elements('stops_uof2'):
-          nivo.bar(summary_data['Uof Outcomes'][selectedUoF],
+          nivo.bar(summary_data['Uof Outcomes'][st.session_state['filters']['uof_type']],
                   title=f"Outcomes of Stops Where Use of Force Occurs: {date_range}", stacked=True, ylabel="Subject Race",
                   columns=selected_races, layout='horizontal',_debug=_debug, percent=True,
                   yoffset=-150)

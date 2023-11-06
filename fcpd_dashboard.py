@@ -92,11 +92,13 @@ if args.gender:
 if args.res:
     filters['residency'] = args.res
 
+if "filters" not in st.session_state:
+    st.session_state['filters'] = {}
 for k,v in filters.items():
-    if k in st.session_state and st.session_state[k]!=v:
+    if k in st.session_state['filters'] and st.session_state['filters'][k]!=v:
         logger.info(f"Value of filter {k} changed to {v}")
     
-    st.session_state[k] = v
+    st.session_state['filters'][k] = v
 
 population = get_population(today)
 

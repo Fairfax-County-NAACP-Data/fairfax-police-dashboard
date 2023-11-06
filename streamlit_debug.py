@@ -62,6 +62,7 @@ def add_debug(st):
 
     st.markdown = do_nothing
     st.warning = do_nothing
+    st.button = lambda: False
 
 def debug_elements(streamlit_elements):
     streamlit_elements.elements = empty

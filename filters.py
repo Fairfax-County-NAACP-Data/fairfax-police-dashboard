@@ -30,15 +30,23 @@ def add_filters(police_data, sidebar=True):
 
     selection = {}
     with sb:
+        help_msg = "Create a URL that can be shared with others for the current filters.\n\nURL will appear in URL bar."
         if sidebar:
             st.text("####################################")
             st.subheader("Possible Future location of Chapter Logo")
             st.text("####################################")
 
+            if st.button(label="Create URL for Filters", 
+                     help=help_msg):
+                st.experimental_set_query_params(**st.session_state['filters'])
+
             col1=nullcontext()
             col2=nullcontext()
             col3=nullcontext()
         else:
+            if st.button(label="Create URL for Filters", 
+                     help=help_msg):
+                st.experimental_set_query_params(**st.session_state['filters'])
             col1, col2, col3= st.columns(3)
 
         filter = 'time_stats'
