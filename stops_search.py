@@ -4,6 +4,7 @@ import data
 import streamlit_elements
 from util import text_file
 from streamlit_logger import get_logger
+from util import _get_index
 
 logger = get_logger(level='DEBUG')
 
@@ -17,8 +18,9 @@ def stops_search_dashboard(police_data, population, selected_races,
         stdb.debug_elements(streamlit_elements)
 
     col1, col2 = st.columns(2)
+    result_data = ["ALL", "NON-ARRESTS"]
     with col1:
-        selected_outcome = st.selectbox("Filter By Result of Stop", ["ALL", "NON-ARRESTS"],
+        selected_outcome = st.selectbox("Filter By Result of Stop", result_data, index=_get_index("result", result_data),
                                             help="Show search statistics for all stops or only ones that do not end in arrests.\n\n"+
                                             text_file("./markdown/non_arrests_searches.md"))
 
@@ -26,8 +28,9 @@ def stops_search_dashboard(police_data, population, selected_races,
     time_data = data.get_timelines(police_data, population, selected_reason, selected_time_series, selected_gender, 
                                    selected_residency, selected_scale)
     
+    search_type_data = time_data['Search Rate'].keys()
     with col2:
-        selected_type = st.selectbox("Filter by Search Type", time_data['Search Rate'].keys(),
+        selected_type = st.selectbox("Filter by Search Type", search_type_data, index=_get_index("search_type",search_type_data),
                                      help="Show search statistics for when only persons were searched (Person Only), only vehicles were searched (Vehicle Only), "+
                                      "both were searched (Both Only), or any search occurred (All)")
         

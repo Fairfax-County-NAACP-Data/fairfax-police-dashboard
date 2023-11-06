@@ -5,7 +5,7 @@ Select the tabs above to view the **Stops Dashboard**.
 
 ## Other Resources
 There have been multiple recent research studies on the Fairfax County Police Department that may also interest you:
-- *An Investigation Of The Use Of Force By The Fairfax County Police Department* by Researchers at the University of Texas at San Antonio. [[Presentation](https://www.fairfaxcounty.gov/boardofsupervisors/sites/boardofsupervisors/files/Assets/meeting-materials/2021/June29-public-safety-Police-Department-Use-of-Force-Presentation.pdf) - [Full Report](https://www.fairfaxcounty.gov/boardofsupervisors/sites/boardofsupervisors/files/assets/meeting-materials/2021/june29-public-safety-use-of-force-research-project-report-utsa.pdf)]
+- *An Investigation Of The Use Of Force By The Fairfax County Police Department* by Researchers at the University of Texas at San Antonio. [[Presentation](https://www.fairfaxcounty.gov/boardofsupervisors/sites/boardofsupervisors/files/Assets/meeting-materials/2021/June29-public-safety-Police-Department-Use-of-Force-Presentation.pdf) | [Full Report](https://www.fairfaxcounty.gov/boardofsupervisors/sites/boardofsupervisors/files/assets/meeting-materials/2021/june29-public-safety-use-of-force-research-project-report-utsa.pdf)]
 - *Review Of Issues Surrounding Recent Police-Shooting Incidents* by [Police Executive Research Forum](https://www.policeforum.org/). [[Full Report](https://www.fairfaxcounty.gov/police/sites/police/files/assets/images/chief/reports/perf%20fcpd%20final.pdf)]
 
 ## Feedback

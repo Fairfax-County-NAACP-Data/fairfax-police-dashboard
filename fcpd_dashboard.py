@@ -78,10 +78,13 @@ with st.empty():
             "See the `About` section for more information about police stops and the data. See the `Help` section for the basics on navigating "+
             "this dashboard.")
 
+if 'query' not in st.session_state: # Only occurs during load/reload of page
+    st.session_state['query'] = st.experimental_get_query_params()
+
 filters = add_filters(police_data, sidebar=sidebar)
 
 if args.time:
-    filters['time stats'] = int(args.time) if args.time.isdigit() else args.time
+    filters['time_stats'] = int(args.time) if args.time.isdigit() else args.time
 if args.reason:
     filters['reason'] = args.reason
 if args.gender:
@@ -104,30 +107,30 @@ with tab0:
 
 with tab1:
     stops_summary_dashboard(police_data, population, filters['race'],
-                            filters['reason'], filters['time stats'], filters['gender'], filters['residency'])
+                            filters['reason'], filters['time_stats'], filters['gender'], filters['residency'])
 
 with tab2:
     stops_rate_dashboard(police_data, population,filters['race'],
                             filters['reason'], filters['time series'], filters['gender'], filters['residency'],
-                            filters['time scale'],
+                            filters['time_scale'],
                             _debug=args.debug)
     
 with tab3:
     stops_outcome_dashboard(police_data, population, filters['race'],
-                            filters['reason'], filters['time stats'], filters['time series'], filters['gender'], filters['residency'], 
-                            filters['time scale'],
+                            filters['reason'], filters['time_stats'], filters['time series'], filters['gender'], filters['residency'], 
+                            filters['time_scale'],
                             _debug=args.debug)
 
 with tab4:
     stops_search_dashboard(police_data, population, filters['race'],
-                            filters['reason'], filters['time stats'], filters['time series'], filters['gender'], filters['residency'], 
-                            filters['time scale'],
+                            filters['reason'], filters['time_stats'], filters['time series'], filters['gender'], filters['residency'], 
+                            filters['time_scale'],
                             _debug=args.debug)
 
 with tab5:
     stops_uof_dashboard(police_data, population, filters['race'],
-                            filters['reason'], filters['time stats'], filters['time series'], filters['gender'], filters['residency'], 
-                            filters['time scale'],
+                            filters['reason'], filters['time_stats'], filters['time series'], filters['gender'], filters['residency'], 
+                            filters['time_scale'],
                             _debug=args.debug)
     
 with tab6:

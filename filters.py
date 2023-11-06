@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from contextlib import nullcontext
-from util import text_file
+from util import text_file, _get_index
 
 
 def add_filters(police_data, sidebar=True):
@@ -41,19 +41,25 @@ def add_filters(police_data, sidebar=True):
         else:
             col1, col2, col3= st.columns(3)
 
+        filter = 'time_stats'
+        data = time_periods
         with col1:
-            selection['time stats'] = st.selectbox("Time Range for Statistics", time_periods, index=1,
+            selection[filter] = st.selectbox("Time Range for Statistics", data, index=_get_index(filter, data, 1),
                                             help="Stop totals, arrest rates, and other calculations in tables and bar charts will "
                                                 "use data from the selected time period.")
+        
+        filter = 'time_scale'
+        data = ["Monthly",'Quarterly','Annually']
         with col2:
-            selection['time scale'] = st.selectbox("Time Scale", ["Monthly",'Quarterly','Annually'], 
-                                index=1,
+            selection[filter] = st.selectbox("Time Scale", data, index=_get_index(filter, data, 1),
                                 help='Time scale to use on time axis of line graphs.')
-            # selection['time series'] = st.selectbox("Time Range for Time Charts", time_periods, 
-            #                                 help="Filter to show only statistics for selected time period")
+
         selection['time series'] = 'ALL'
+
+        filter = 'reason'
+        data = reasons_for_stop
         with col3:
-            selection['reason'] = st.selectbox("Reason For Stop", reasons_for_stop,
+            selection[filter] = st.selectbox("Reason For Stop", data, index=_get_index(filter, data),
                                             help=text_file(r"./markdown/reasons_for_stop.md"))        
             
         if sidebar:
@@ -62,17 +68,30 @@ def add_filters(police_data, sidebar=True):
             col3=nullcontext()
         else:
             col1, col2, col3 = st.columns(3)
+
+        filter = 'gender'
+        data = genders
         with col1:
-            selection['gender'] = st.selectbox("Gender", genders,
+            selection[filter] = st.selectbox("Gender", data, index=_get_index(filter, data),
                                             help="Filter to show only statistics for a gender")
+            
+        filter = 'residency'
+        data = res
         with col2:
-            selection['residency'] = st.selectbox("Residency", res,
+            selection[filter] = st.selectbox("Residency", data, index=_get_index(filter, data),
                                             help="Filter to show only statistics for subjects who are residents of Fairfax County, "+
                                             "other residents of Virginia, or out-of-state residents. "+
                                             "Residency field added in July 2021.")
+            
+        filter = 'race'
+        data = police_data['result']["Race/Ethnicity"].unique()
+        if filter in st.session_state['query'] and st.session_state['query'][filter][0] in data:
+            default = [x for x in data if x in st.session_state['query'][filter]]
+        else:
+            default = ["ASIAN/PACIFIC ISLANDER", "BLACK", "LATINO", "WHITE"]
         with col3:
-            selection['race'] = st.multiselect("Race/Ethnicity", police_data['result']["Race/Ethnicity"].unique(),
-                                            default=["ASIAN/PACIFIC ISLANDER", "BLACK", "LATINO", "WHITE"],
+            selection['race'] = st.multiselect("Race/Ethnicity", data,
+                                            default=default,
                                             help="Only the selected races/ethnicities will be shown in the charts. "+
                                             "Only affects what is shown. No values are re-calculated. "
                                             "\n\nNOTE: Indigenous is not shown by default due to small numbers.")

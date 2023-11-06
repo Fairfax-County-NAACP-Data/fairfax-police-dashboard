@@ -4,6 +4,7 @@ import nivo
 import data
 import streamlit_elements
 from streamlit_logger import get_logger
+from util import _get_index
 
 logger = get_logger(level='DEBUG')
 
@@ -58,7 +59,8 @@ def stops_uof_dashboard(police_data, population, selected_races,
                 help="Percent of stops where 1 or more subjects used force")
     
     if not no_data:
-      selectedUoF = st.selectbox("Use of Force", summary_data['Uof Outcomes'].keys())
+      uof_data = summary_data['Uof Outcomes'].keys()
+      selectedUoF = st.selectbox("Use of Force", uof_data, index=_get_index("uof_type", uof_data))
       for k in ['use of force type']:
         v = selectedUoF
         if k in st.session_state and st.session_state[k]!=v:
