@@ -56,6 +56,7 @@ def stops_search_dashboard(police_data, population, selected_races,
     min_date, max_date = data.get_date_range(selected_time_stats, data=police_data, residency=selected_residency)
     date_range = f"{min_date.strftime('%B %Y')} - {max_date.strftime('%B %Y')}"
 
+    search_help = "Percent of stops where a search occurs out of the total number of stops for a group"
     with streamlit_elements.elements('stops_search'):
         nivo.bar(counts,
                  title=f"Search Counts: {date_range}", stacked=True,
@@ -65,8 +66,8 @@ def stops_search_dashboard(police_data, population, selected_races,
         nivo.bar(rates,
                  title=f"Search Rates: {date_range}", stacked=False,
                  columns=selected_races, layout='vertical',_debug=_debug, label_format=[".1%",".0%"],
-                 help="Percent of stops where a search occurs")
+                 help=search_help)
         nivo.plot(time_data['Search Rate'+addon][st.session_state['filters']['search_type']], ylabel="Search Rate", time_scale=selected_scale, 
                   title=r"Search Rate",
-                  help="Percent of stops where a search occurs",
+                  help=search_help,
                   columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"])

@@ -38,10 +38,11 @@ def stops_summary_dashboard(police_data, population, selected_races,
                 )
             }
 
-        help = {"Arrest Rate":"Percent of stops that end in arrest",
-                "Search Rate":"Percent of stops where a person or vehicle search occurs",
-                "Search Rate (Non-Arrests Only)":"Percent of stops NOT ending in arrest where a person or vehicle search occurs. \n\n"+text_file("./markdown/non_arrests_searches.md"),
-                "Officer Use of Force Rate":"Percent of stops where an officer uses force",
+        help = {"Arrest Rate":"Percent of stops that end in arrest out of the total number of stops for a group",
+                "Search Rate":"Percent of stops where a person or vehicle search occurs out of the total number of stops for a group",
+                "Search Rate (Non-Arrests Only)":"Percent of stops NOT ending in arrest where a person or vehicle search occurs out of the total number of stops for a group. \n\n"+\
+                    text_file("./markdown/non_arrests_searches.md"),
+                "Officer Use of Force Rate":"Percent of stops where an officer uses force out of the total number of stops for a group",
                 }
         for k in range(2, len(scard.columns)):
             column_config[scard.columns[k]] = st.column_config.ProgressColumn(

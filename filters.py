@@ -54,7 +54,7 @@ def add_filters(police_data, sidebar=True):
         with col1:
             selection[filter] = st.selectbox("Time Range for Statistics", data, index=_get_index(filter, data, 1),
                                             help="Stop totals, arrest rates, and other calculations in tables and bar charts will "
-                                                "use data from the selected time period.")
+                                                "use data from the selected time period. Line plots vs. time are not affected.")
         
         filter = 'time_scale'
         data = ["Monthly",'Quarterly','Annually']

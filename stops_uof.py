@@ -44,7 +44,7 @@ def stops_uof_dashboard(police_data, population, selected_races,
             nivo.bar(summary_data['UoF Rates'],
                     title=f"Use of Force Rates: {date_range}", stacked=False,
                     columns=selected_races, layout='vertical',_debug=_debug, label_format=[".1%",".1%"],
-                    help="Percent of stops where an officer and/or subject used force")
+                    help="Percent of stops where an officer and/or subject used force out of the total number of stops for a group")
     else:
         st.warning(f"Use of force data was not collected prior to {pd.Period('2021-07').strftime('%B %Y')} so some charts cannot be displayed.")
             
@@ -52,11 +52,11 @@ def stops_uof_dashboard(police_data, population, selected_races,
         nivo.plot(time_data['UoF Rate']["Officer"], ylabel="Use of Force Rate", time_scale=selected_scale, 
                 title=r"Officer Use of Force Rate",
                 columns=selected_races, _debug=_debug, yformat=[".1%", ".0%"],
-                help="Percent of stops where 1 or more officers used force"),
+                help="Percent of stops where 1 or more officers used force out of the total number of stops for a group"),
         nivo.plot(time_data['UoF Rate']["Subject"], ylabel="Use of Force Rate", time_scale=selected_scale, 
                 title=r"Subject Use of Force Rate",
                 columns=selected_races, _debug=_debug, yformat=[".0%", ".1%"],
-                help="Percent of stops where 1 or more subjects used force")
+                help="Percent of stops where 1 or more subjects used force out of the total number of stops for a group")
     
     if not no_data:
       uof_data = summary_data['Uof Outcomes'].keys()
