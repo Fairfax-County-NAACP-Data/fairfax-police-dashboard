@@ -15,6 +15,7 @@ def df_gt():
     src = opd.Source("Virginia")
     df = src.load_from_url([2020,2100], "STOPS", agency="Fairfax County Police Department").table
 
+    df = df.drop_duplicates()
     df["Month"] = df["incident_date"].dt.to_period("M")
     df["Quarter"] = df["incident_date"].dt.to_period("Q")
     df["Race/Ethnicity"] = df["race"].replace({
