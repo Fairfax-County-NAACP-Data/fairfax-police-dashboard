@@ -68,6 +68,12 @@ def get_data(time):
 def get_population(time):
     return data.get_population()
 
+with st.expander('Getting Help', expanded='help_expanded' not in st.session_state) or st.session_state['help_expanded']:
+    st.session_state['help_expanded'] = False
+    st.caption("See the `Help` tab for basic usage. "+
+               "Hover over question marks like the one next to this text for tips and explanations.",
+               help="Hover over question mark icons like this one for helpful information!")
+
 st.title("Fairfax County Police Department Stops Data")
 
 # Add input so that new data will be loaded once a day
@@ -75,8 +81,7 @@ today = datetime.now().replace(hour=0, minute=0, second=0,microsecond=0)
 with st.empty():
     police_data = get_data(today)
     st.markdown("Welcome to Fairfax County XXXXX's dashboard on traffic and pedestrian stops by the Fairfax County Police Department. "+
-            "See the `About` section for more information about police stops and the data. See the `Help` section for the basics on navigating "+
-            "this dashboard.")
+            "See the `About` section for more information about police stops and the data. ")
 
 if 'query' not in st.session_state: # Only occurs during load/reload of page
     st.session_state['query'] = st.experimental_get_query_params()
