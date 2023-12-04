@@ -52,7 +52,7 @@ def add_filters(police_data, sidebar=True):
         filter = 'time_stats'
         data = time_periods
         with col1:
-            selection[filter] = st.selectbox("Time Range for Statistics", data, index=_get_index(filter, data, 1),
+            selection[filter] = st.selectbox("Time Range (for tables and bar charts)", data, index=_get_index(filter, data, 1),
                                             help="Stop totals, arrest rates, and other calculations in tables and bar charts will "
                                                 "use data from the selected time period. Line plots vs. time are not affected.")
         
