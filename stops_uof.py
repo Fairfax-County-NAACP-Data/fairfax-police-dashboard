@@ -71,4 +71,5 @@ def stops_uof_dashboard(police_data, population, selected_races,
           nivo.bar(summary_data['Uof Outcomes'][st.session_state['filters']['uof_type']],
                   title=f"Outcomes of Stops Where Use of Force Occurs: {date_range}", stacked=True, ylabel="Subject Race",
                   columns=selected_races, layout='horizontal',_debug=_debug, percent=True,
-                  yoffset=-150)
+                  yoffset=-150,
+                  help="For stops involving use of force, the percent of stops ending in each outcome type is shown.")
