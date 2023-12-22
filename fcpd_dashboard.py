@@ -3,7 +3,7 @@ import streamlit as st
 from argparse import ArgumentParser
 from datetime import datetime
 
-__version__ = "0.1-beta"
+__version__ = "0.1.1-beta"
 
 parser = ArgumentParser()
 parser.add_argument("-d", "--debug", action='store_true')
