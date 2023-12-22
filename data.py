@@ -369,7 +369,7 @@ def download_data(source_name, table_type, agency, start_date="2020-01-01", logg
 
     data = {} 
     if len(df)>0:
-        df = pd.concat(df)
+        df = pd.concat(df, ignore_index=True)
         df = df.drop_duplicates()
         df["Month"] = df["incident_date"].dt.to_period("M")
         df["Quarter"] = df["incident_date"].dt.to_period("Q")
