@@ -25,7 +25,7 @@ from stops_outcome import stops_outcome_dashboard
 from stops_search import stops_search_dashboard
 from stops_uof import stops_uof_dashboard
 from filters import add_filters
-from streamlit_logger import get_logger, get_remote_ip
+from streamlit_logger import get_logger
 import data
 
 import openpolicedata as opd
@@ -55,7 +55,6 @@ logger.info(datetime.now())
 logger.info("VERSIONS:")
 logger.info(f"\tOpenPoliceData: {opd.__version__}")
 logger.info(f"\tDashboard: {__version__}")
-logger.info(f"IP: {get_remote_ip()}")
 
 table_type = "STOPS"
 agency = "Fairfax County Police Department"
@@ -84,7 +83,7 @@ with st.empty():
             "See the `About` section for more information about police stops and the data. ")
 
 if 'query' not in st.session_state: # Only occurs during load/reload of page
-    st.session_state['query'] = st.experimental_get_query_params()
+    st.session_state['query'] = st.query_params.to_dict()
 
 filters = add_filters(police_data, sidebar=sidebar)
 

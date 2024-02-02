@@ -12,7 +12,7 @@ def text_file(file):
 
 def _get_index(filter, data, default=0):
     if 'query' in st.session_state and filter in st.session_state['query']:
-        val = st.session_state['query'][filter][0]
+        val = st.session_state['query'][filter]
         val = int(val) if val.isnumeric() else val
     if 'query' in st.session_state and filter in st.session_state['query'] and val in data:
         return [k for k,x in enumerate(data) if x==val][0]
