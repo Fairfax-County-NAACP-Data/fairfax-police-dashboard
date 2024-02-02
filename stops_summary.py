@@ -24,6 +24,12 @@ def stops_summary_dashboard(police_data, population, selected_races,
         stops_per_1000_max = float(scard['Stops per 1000 People'].max())
         stops_per_1000_format = max(1,math.ceil(-math.log10(stops_per_1000_max))) if stops_per_1000_max!=0 and pd.notnull(stops_per_1000_max) else 1
         column_config={
+                'Population':  st.column_config.ProgressColumn(
+                    min_value=0,
+                    max_value=100,
+                    format="%0.1f%%",
+                    help='Total county population 15 and older. See About tab for details.'
+                ),
                 "Total Stops": st.column_config.ProgressColumn(
                     format="%d",
                     min_value=0,
@@ -44,13 +50,14 @@ def stops_summary_dashboard(police_data, population, selected_races,
                     text_file("./markdown/non_arrests_searches.md"),
                 "Officer Use of Force Rate":"Percent of stops where an officer uses force out of the total number of stops for a group",
                 }
-        for k in range(2, len(scard.columns)):
-            column_config[scard.columns[k]] = st.column_config.ProgressColumn(
-                    min_value=0,
-                    max_value=getmax(scard[scard.columns[k]]),
-                    format="%0.1f%%",
-                    help=help[scard.columns[k]] if scard.columns[k] in help else None
-                )
+        for k in range(0, len(scard.columns)):
+            if 'Rate' in scard.columns[k]:
+                column_config[scard.columns[k]] = st.column_config.ProgressColumn(
+                        min_value=0,
+                        max_value=getmax(scard[scard.columns[k]]),
+                        format="%0.1f%%",
+                        help=help[scard.columns[k]] if scard.columns[k] in help else None
+                    )
 
         st.dataframe(
             scard.loc[selected_races],

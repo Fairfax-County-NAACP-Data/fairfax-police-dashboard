@@ -215,6 +215,7 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
 
     is_arrest = df_filt['result']["action_taken"]=="ARREST"
     result = {}
+    result['Population'] = population/population.sum()*100
     if reason_for_stop == "ALL":
         result["reasons"] = df_filt['result'].groupby("Race/Ethnicity").sum(numeric_only=True).transpose()
         def sum_by_race(df):
