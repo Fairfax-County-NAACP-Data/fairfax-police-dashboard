@@ -20,11 +20,11 @@ Collection of the following data began in July 2020:
 - Reason for the stop: traffic violation, equipment violation, Terry stop (i.e. stop and frisk), check point, or other investigative detenction
 - Whether a warning, written citation, or summons was issued or whether any person was arrested
 - The most serious violation (if a warning, written citation, or summons was issued or an arrest was made)
-- Whether the vehicle or person was searched
+- Whether the vehicle or person was searched (FCPD: [motor vehicle searches policy](https://www.fairfaxcounty.gov/police/sites/police/files/assets/generalorders/go-603.pdf) (p. 3), [stop and frisk policy](https://www.fairfaxcounty.gov/police/sites/police/files/assets/images/chief/generalorders/go_603.4.pdf))
 
 Additional data was collected starting in July 2021:
 - Whether the person stopped spoke English
-- Whether the law-enforcement officer or State Police officer used physical force against any person
+- Whether any officer used physical force against any person (FCPD: [use of force definitions and reporting](https://www.fairfaxcounty.gov/police/sites/police/files/assets/generalorders/go-540.pdf))
 - Whether any person used physical force against any officers
 - Residency of person stopped (resident of city/county, other VA resident, or out of state resident)
 - Whether the person stopped was a driver, passenger or individual
