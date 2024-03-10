@@ -30,11 +30,11 @@ import data
 
 import openpolicedata as opd
 
-def markdown_file(file):
+def markdown_file(file, *args):
     with open(file) as f:
         text = f.read()
 
-    st.markdown(text)
+    st.markdown(text.format(*args))
 
 sidebar = True
 
@@ -109,7 +109,7 @@ population = get_population(today)
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(['Introduction', 'Summary', "Initial Stop", "Outcomes", "Searches", "Use of Force", "About", "Help"])
 
 with tab0:
-    markdown_file(r"./markdown/intro.md")
+    markdown_file(r"./markdown/intro.md", police_data['result']["Month"].max().strftime('%B %Y'))
 
 with tab1:
     stops_summary_dashboard(police_data, population, filters['race'],

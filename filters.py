@@ -30,7 +30,7 @@ def add_filters(police_data, sidebar=True):
 
     selection = {}
     with sb:
-        help_msg = "Create a URL for the current filters that can be shared with others.\n\nURL will appear in URL bar."
+        help_msg = "Create a URL for the current filters that can be shared with others.\n\nURL will appear in the browser URL bar."
         if sidebar:
             st.text("####################################")
             st.subheader("Possible Future location of Chapter Logo")

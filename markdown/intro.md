@@ -1,5 +1,5 @@
 ## Overview
-This site is the start of what eventually will be a series of dashboards on various types of interactions between the Fairfax County Police Department and the community. The first dashboard is on **Stops**: both traffic and pedestrian. Future dashboards will address **use of force**, **arrests**, **vehicle pursuits**, and other types of interactions.
+This site is the start of what eventually will be a series of dashboards on various types of interactions between the Fairfax County Police Department and the community. The first dashboard is on **Stops**: both traffic and pedestrian. This dashboard will automatically be updated as new data becomes available. The most recent data currently available is from {}. Future dashboards will address **use of force**, **arrests**, **vehicle pursuits**, and other types of interactions.
 
 Select the tabs above to view the **Stops Dashboard**.
 
