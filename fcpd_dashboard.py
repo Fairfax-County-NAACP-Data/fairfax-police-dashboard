@@ -36,8 +36,12 @@ perc_label = f'% Change Since {df["Date"].iloc[0].strftime("%B %Y")}'
 
 df[perc_label] = df.apply(lambda x: (x['Total']-base_count[x['Type']])/base_count[x['Type']]*100, axis=1)
 
-# st.line_chart(df, x='Date', y=['% Crimes', '% Charges', '% Arrests'], y_label=f'% Change Since {df["Date"].iloc[0].to_period("M")}')
-# st.scatter_chart(df, x='% Crimes', y='% Arrests')
+chart = alt.Chart(df).mark_line().encode(
+    x='yearmonth(Date):T',
+    y='Total',
+    color='Type'
+)
+st.altair_chart(chart)
 
 chart = alt.Chart(df).mark_line().encode(
     x='yearmonth(Date):T',
@@ -45,6 +49,11 @@ chart = alt.Chart(df).mark_line().encode(
     color='Type'
 )
 st.altair_chart(chart)
+
+st.markdown('Crime data from [FCPD Crime Mapping Dashboard](https://experience.arcgis.com/experience/03bcc658f4f44662ab70308157c31d0e). '+\
+            'Charges/Arrests data from [FCPD Arrests Incident Level Data](https://www.fairfaxcounty.gov/police/data/archive). '+\
+            'Each row of the Arrests table is a charge. To estimate the number of arrests, which is defined as the number of times that '+
+            'FCPD seizes a person to charge them, the number of arrests is estimated based on unique combination of case number and arrest ID.')
 
 # with streamlit_elements.elements('charges v arrests'):
 #     nivo.plot(time_data['Arrest Rate'], ylabel=f"Arrest Rate", time_scale=selected_scale, 
