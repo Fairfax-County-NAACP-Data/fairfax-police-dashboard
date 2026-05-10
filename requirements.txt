@@ -1,4 +1,4 @@
-openpolicedata==0.5.6
+openpolicedata
 pandas
 streamlit
 streamlit-elements==0.1.*
