@@ -12,10 +12,6 @@ def stops_uof_dashboard(police_data, population, selected_races,
                             selected_reason, selected_time_stats, selected_time_series, selected_gender, selected_residency, 
                             selected_scale,
                             _debug=False):
-    
-    if _debug:
-        import streamlit_debug as stdb
-        stdb.debug_elements(streamlit_elements)
 
     _, summary_data = data.get_summary_stats(police_data, population, selected_reason, selected_time_stats, selected_gender, selected_residency)
     time_data = data.get_timelines(police_data, population, selected_reason, selected_time_series, selected_gender, 

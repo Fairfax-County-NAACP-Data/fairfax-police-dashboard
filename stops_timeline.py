@@ -8,10 +8,6 @@ def stops_rate_dashboard(police_data, population, selected_races,
                             selected_reason, selected_time, selected_gender, selected_residency,
                             selected_scale,
                             _debug=False):
-    
-    if _debug:
-        import streamlit_debug as stdb
-        stdb.debug_elements(streamlit_elements)
 
     plot_data = data.get_timelines(police_data, population, selected_reason, selected_time, selected_gender, 
                                    selected_residency, selected_scale)

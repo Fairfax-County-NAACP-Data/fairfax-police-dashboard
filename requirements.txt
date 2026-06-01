@@ -2,3 +2,4 @@ openpolicedata
 pandas
 streamlit
 streamlit-elements==0.1.*
+gspread

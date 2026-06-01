@@ -7,7 +7,7 @@ from util import text_file, _get_index
 def add_filters(police_data, sidebar=True):
     exclude = ["MISSING"]
 
-    reasons_for_stop = police_data['result'].columns.drop(["Month","Race/Ethnicity",'gender','residency',"action_taken"]).tolist()
+    reasons_for_stop = police_data['result'].columns.drop(["Month","Race/Ethnicity",'GENDER','RESIDENCY',"ACTION TAKEN"]).tolist()
     reasons_for_stop.insert(0, "ALL")
     # Reorder
     top = [x for x in ["ALL", "TRAFFIC VIOLATION", "EQUIPMENT VIOLATION", "TERRY STOP"] if x in reasons_for_stop]
@@ -17,10 +17,10 @@ def add_filters(police_data, sidebar=True):
     time_periods = ["ALL","MOST RECENT YEAR"]
     time_periods.extend([x for x in range(police_data['result']["Month"].dt.year.max(), 2019, -1)])
 
-    genders = [x for x in police_data['result']["gender"].unique() if x not in exclude]
+    genders = [x for x in police_data['result']["GENDER"].unique() if x not in exclude]
     genders.insert(0, "ALL")
 
-    res = [x for x in police_data['result']["residency"].unique() if pd.notnull(x) and x not in exclude]
+    res = [x for x in police_data['result']["RESIDENCY"].unique() if pd.notnull(x) and x not in exclude]
     top = [x for x in res if "COUNTY" in x.upper() and "OUT" not in x.upper() and "OTHER" not in x.upper()]
     top.extend([x for x in res if x not in top])
     res = top

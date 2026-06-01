@@ -12,10 +12,6 @@ def stops_search_dashboard(police_data, population, selected_races,
                             selected_reason, selected_time_stats, selected_time_series, selected_gender, selected_residency, 
                             selected_scale,
                             _debug=False):
-    
-    if _debug:
-        import streamlit_debug as stdb
-        stdb.debug_elements(streamlit_elements)
 
     col1, col2 = st.columns(2)
     result_data = ["ALL", "NON-ARRESTS"]

@@ -4,6 +4,8 @@ import math
 import pandas as pd
 import openpolicedata as opd
 import streamlit as st
+import traceback
+from streamlit_gsheets import GSheetsConnection
 
 # Default logger that will only print out critical messages
 default_logger = logging.getLogger("critical")
@@ -17,9 +19,18 @@ re_replacements = {
             'AMERICAN INDIAN OR ALASKA NATIVE':"Indigenous".upper()
         }
 
+# https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2020-2022/cc-est2022-alldata.pdf
+census_age_groups = {}
+for k in range(0, 17):
+    census_age_groups[k+1] = [k*5, (k+1)*5-1]
+assert census_age_groups[17]==[80,84]
+census_age_groups[18] = [85, 120]
+
 def get_population():
     # TODO: Create population table that can be broken down by age and gender
-    df = load_csv('FairfaxCountyPopulation.csv',index_col="Race/Ethnicity")
+    conn = st.connection("population", type=GSheetsConnection)
+    df = conn.read()
+    df = df.set_index("Race/Ethnicity")
     return df["Population"]
 
 def get_data(source_name="Virginia", table_type="STOPS", agency="Fairfax County Police Department"):
@@ -29,9 +40,9 @@ def get_data(source_name="Virginia", table_type="STOPS", agency="Fairfax County 
               "both_searched_na", 'person_searched_only_na','vehicle_searched_only_na', 
               'uof_officer_only','uof_subject_only','uof_both']
     data = {}
+    conn = st.connection("stops", type=GSheetsConnection)
     for t in tables:
-        csv_filename = f"{source_name}_{agency}_{table_type}_{t}.csv"
-        data[t] = load_csv(csv_filename)
+        data[t] = conn.read(worksheet=t)
         data[t]["Month"] = pd.to_datetime(data[t]["Month"], errors="coerce").dt.to_period("M")
         
     start_date = max([x["Month"].max() for x in data.values()])
@@ -42,16 +53,20 @@ def get_data(source_name="Virginia", table_type="STOPS", agency="Fairfax County 
         new_data = download_data(source_name, table_type, agency, start_date=start_date, logger=logger)
 
         if len(new_data):
+            # TODO: Only update if latest month is after max month
+            # TODO: Update GSheets when update is found
             for t in tables:
                 new_months = new_data[t]["Month"].unique()
                 # For months in both datasets, replace with new data
                 data[t] = data[t][~data[t]['Month'].isin(new_months)]
                 data[t] = pd.concat([data[t], new_data[t]], ignore_index=True)
-    except:
+    except Exception as e:
+        print('Exception encounter when trying to load most recent data')
+        traceback.print_exc()
         pass
 
     for k in data.keys():
-        data[k]['gender'] = data[k]['gender'].fillna("MISSING")
+        data[k]['GENDER'] = data[k]['GENDER'].fillna("MISSING")
         
     return data
 
@@ -59,7 +74,7 @@ def get_data(source_name="Virginia", table_type="STOPS", agency="Fairfax County 
 def getdates(data, selected_residency, date_key='result'):
     min_date = data[date_key]["Month"].min()
     max_date = data[date_key]["Month"].max()
-    min_residency_date = data[date_key][data[date_key]['residency'].notnull()]["Month"].min()
+    min_residency_date = data[date_key][data[date_key]['RESIDENCY'].notnull()]["Month"].min()
     if selected_residency!='ALL':
         min_date = min_residency_date
 
@@ -106,7 +121,7 @@ def _filterdata(data, period, gender, residency):
             df = df[df["gender"]==gender]       
 
         if residency != "ALL":
-            df = df[df["residency"]==residency]
+            df = df[df["RESIDENCY"]==residency]
 
         result[key] = df
 
@@ -146,7 +161,7 @@ def get_timelines(data, population, reason_for_stop, period, gender, residency, 
 
     _set_time(df_filt, selected_scale)
 
-    is_arrest = df_filt['result']["action_taken"]=="ARREST"
+    is_arrest = df_filt['result']["ACTION TAKEN"].str.upper()=="ARREST"
     scale_col = "TimeScale"
     if "annual" in selected_scale.lower():
         months = 12
@@ -168,7 +183,7 @@ def get_timelines(data, population, reason_for_stop, period, gender, residency, 
         
     result['Total Stops by Race'] = sum_by_race(df_filt['result'])
     total_arrests = sum_by_race(df_filt['result'][is_arrest])
-    total_warnings = sum_by_race(df_filt['result'][df_filt['result']["action_taken"]=="WARNING ISSUED"])
+    total_warnings = sum_by_race(df_filt['result'][df_filt['result']["ACTION TAKEN"].str.upper()=="WARNING ISSUED"])
 
     result['Stops per 1000 People'] = (result['Total Stops by Race'] / population * 1000)[result['Total Stops by Race'].columns] * 12 / months
     result['Arrest Rate'] = total_arrests.divide(result['Total Stops by Race'], fill_value=0)
@@ -213,7 +228,7 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
                                 .add(df_filt['uof_both'].set_index(index),fill_value=0)\
                                 .reset_index()
 
-    is_arrest = df_filt['result']["action_taken"]=="ARREST"
+    is_arrest = df_filt['result']["ACTION TAKEN"].str.upper()=="ARREST"
     result = {}
     result['Population'] = population/population.sum()*100
     if reason_for_stop == "ALL":
@@ -221,7 +236,7 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
         def sum_by_race(df):
             return df.groupby("Race/Ethnicity").sum(numeric_only=True).sum(axis=1).convert_dtypes()
         def sum_actions(df):
-            return df.groupby(['action_taken','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
+            return df.groupby(['ACTION TAKEN','Race/Ethnicity']).sum(numeric_only=True).sum(axis=1).convert_dtypes().unstack(fill_value=0)
     else:
         result["reasons"] = df_filt['result'].groupby("Race/Ethnicity")[[reason_for_stop]].sum().transpose()
         def sum_by_race(df):
@@ -233,9 +248,8 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
             if reason_for_stop not in df:
                 df = df.copy()
                 df[reason_for_stop] = 0
-            return df.groupby(['action_taken','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
-
-        
+            return df.groupby(['ACTION TAKEN','Race/Ethnicity'])[reason_for_stop].sum().unstack(fill_value=0)
+ 
     result['Outcomes'] = sum_actions(df_filt['result'])
     result['Total Stops'] = sum_by_race(df_filt['result'])
     total_stops_cpa_update = sum_by_race(df_filt['result'][df_filt['result']["Month"]>="2021-07"])
@@ -250,7 +264,7 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
     result['Search Counts NA'] = pd.DataFrame({"Person Only":sum_by_race(df_filt['person_searched_only_na']),
                                             "Vehicle Only":sum_by_race(df_filt['vehicle_searched_only_na']),
                                             "Both":sum_by_race(df_filt['both_searched_na'])}).transpose()
-    total_stop_na = sum_by_race(df_filt['result'][df_filt['result']['action_taken']!="ARREST"]) if _SUBTRACT_ARRESTS else result['Total Stops']
+    total_stop_na = sum_by_race(df_filt['result'][df_filt['result']['ACTION TAKEN'].str.upper()!="ARREST"]) if _SUBTRACT_ARRESTS else result['Total Stops']
     search_rate_total_na = sum_by_race(df_filt['All Searches NA']).divide(total_stop_na, fill_value=0)
     result['Search Rates NA'] = pd.DataFrame({"Person Only":result['Search Counts NA'].loc["Person Only"].divide(total_stop_na, fill_value=0),
                                             "Vehicle Only":result['Search Counts NA'].loc["Vehicle Only"].divide(total_stop_na, fill_value=0),
@@ -292,11 +306,18 @@ def get_summary_stats(data, population, reason_for_stop, period, gender, residen
 
 
 def download_population(agency, logger=default_logger):
+    # https://www.dcjs.virginia.gov/content/community-policing-reports
     # 2023 CPA report:
     # https://www.dcjs.virginia.gov/sites/dcjs.virginia.gov/files/publications/research/report-analysis-traffic-stop-data-fiscal-year-2023.pdf
 
+    # State UoF complaints: https://www.dcjs.virginia.gov/sites/dcjs.virginia.gov/files/publications/research/pedestrian/2024/Traffic%20Report/Appendix%20J%20Use%20of%20Force%20Complaints.pdf
+
     # Populations used based on this link per appendix I
-    all_pop = pd.read_csv(r"https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/asrh/cc-est2021-alldata-51.csv")
+    # https://www.dcjs.virginia.gov/sites/dcjs.virginia.gov/files/publications/research/pedestrian/2024/Traffic%20Report/Appendix%20I%20Methodology%20Notes%202024.pdf
+    # https://www.census.gov/data/tables/time-series/demo/popest/2020s-counties-detail.html
+    # https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2020-2024/CC-EST2024-ALLDATA.pdf
+    # all_pop = pd.read_csv(r"https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/asrh/cc-est2021-alldata-51.csv")
+    all_pop = pd.read_csv(r"https://www2.census.gov/programs-surveys/popest/datasets/2020-2024/counties/asrh/cc-est2024-alldata-51.csv")
 
     locale = agency.replace("Police Department","").replace("Sheriff's Department","").replace("Sheriff's Office","").strip()
 
@@ -307,17 +328,26 @@ def download_population(agency, logger=default_logger):
 
     # Per Appendix I: "The four youngest age groups—together spanning ages 0-14—were dropped 
     # from the benchmark estimates, leaving a driving-age sample of individuals ages 15 and older."
-    # Remove age groups 0-3
+    # https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2020-2024/CC-EST2024-ALLDATA.pdf
+    # The key for AGEGRP is as follows:  
+    # 0 = Total 
+    # 1 = Age 0 to 4 years 
+    # 2 = Age 5 to 9 years 
+    # 3 = Age 10 to 14 years 
+    # etc.
     pop = pop[pop['AGEGRP']>3]
 
-    # Appendix I: Estimates for 2021 were used
-    # Per https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2020-2022/cc-est2022-alldata.pdf
-    # The key for the YEAR variable is as follows: 
-    # 1 = 4/1/2020 population estimates base 
-    # 2 = 7/1/2020 population estimate 
-    # 3 = 7/1/2021 population estimate
+    # TODO: In the future, breakout population by year?
+    # TODO: In the future, breakout population by age?
+
+    # The key for the YEAR variable is as follows:  
+    # 1 = 4/1/2020 population estimates base        
+    # 2 = 7/1/2020 population estimate      
+    # 3 = 7/1/2021 population estimate 
     # 4 = 7/1/2022 population estimate 
-    pop = pop[pop["YEAR"]==3]
+    # 5 = 7/1/2023 population estimate 
+    # 6 = 7/1/2024 population estimate
+    pop = pop[pop["YEAR"]==6]
 
     # Add up across age groups
     pop = pop.sum()
@@ -348,14 +378,15 @@ def download_population(agency, logger=default_logger):
     return pop
 
 
-def download_data(source_name, table_type, agency, start_date="2020-01-01", logger=default_logger):
+def download_data(source_name, table_type, agency, start_date=2020, logger=default_logger):
     # TODO: Add age group
 
     cur_year = datetime.now().year
-    stop_date = f"{cur_year+1}-01-01"
+    stop_date = cur_year+1
 
     src = opd.Source(source_name)
-    record_count = src.get_count([start_date, stop_date], table_type, agency=agency)
+    print([start_date, stop_date],)
+    record_count = src.get_count(table_type, [start_date, stop_date], agency=agency)
     
     df = []
     batch_size = 5000
@@ -363,7 +394,7 @@ def download_data(source_name, table_type, agency, start_date="2020-01-01", logg
     iter = 0
     wait_text = "Loading most recent data ({} of " + f"{nbatches})"
     pbar = st.progress(0, text=wait_text.format(0))
-    for tbl in src.load_from_url_gen(year=[start_date, stop_date], table_type=table_type, nbatch=batch_size, agency=agency):
+    for tbl in src.load_iter(year=[start_date, stop_date], table_type=table_type, nbatch=batch_size, agency=agency):
         iter+=1
         df.append(tbl.table)
         pbar.progress(iter / nbatches, text=wait_text.format(iter))
@@ -372,33 +403,34 @@ def download_data(source_name, table_type, agency, start_date="2020-01-01", logg
     if len(df)>0:
         df = pd.concat(df, ignore_index=True)
         df = df.drop_duplicates()
-        df["Month"] = df["incident_date"].dt.to_period("M")
-        df["Quarter"] = df["incident_date"].dt.to_period("Q")
-        df["Race/Ethnicity"] = df["race"].replace(re_replacements).str.upper()
+        df["Month"] = df["STOP_DATE"].dt.to_period("M")
+        df["Quarter"] = df["STOP_DATE"].dt.to_period("Q")
+        df["RACE"] = df["RACE"].str.upper()
+        df["Race/Ethnicity"] = df["RACE"].replace(re_replacements).str.upper()
 
-        eth = [x for x in df["ethnicity"].unique() if "HISPANIC" in x and not x.upper().startswith("NOT")]
+        eth = [x for x in df["ETHNICITY"].unique() if "HISPANIC" in x.upper() and not x.upper().startswith("NOT") and not x.upper().startswith("NON")]
         if len(eth)!=1:
-            raise ValueError(f"Ethnicity not found in {df['ethnicity'].unique() }")
-        df.loc[df["ethnicity"] == eth[0], "Race/Ethnicity"] = "LATINO"
-        df.loc[df["ethnicity"] == "UNKNOWN", "Race/Ethnicity"] = "UNKNOWN"
+            raise ValueError(f"Ethnicity not found in {df['ETHNICITY'].unique() }")
+        df.loc[df["ETHNICITY"] == eth[0], "Race/Ethnicity"] = "LATINO"
+        df.loc[df["ETHNICITY"].str.upper() == "UNKNOWN", "Race/Ethnicity"] = "UNKNOWN"
 
-        cols = ["Month","Race/Ethnicity",'gender','residency',"action_taken","reason_for_stop"]
+        cols = ["Month","Race/Ethnicity",'GENDER','RESIDENCY',"ACTION TAKEN","REASON FOR STOP"]
 
         data["result"] = df.value_counts(cols, dropna=False).unstack(fill_value=0)
 
-        person_searched = df["person_searched"]=="YES"
-        vehicle_searched = df["vehicle_searched"]=="YES"
+        person_searched = df["PERSON SEARCHED"]=="Y"
+        vehicle_searched = df["VEHICLE SEARCHED"]=="Y"
         data["person_searched_only"] = df[person_searched&~vehicle_searched].value_counts(cols, dropna=False).unstack(fill_value=0)
         data["vehicle_searched_only"] = df[vehicle_searched&~person_searched].value_counts(cols, dropna=False).unstack(fill_value=0)
         data["both_searched"] = df[vehicle_searched&person_searched].value_counts(cols, dropna=False).unstack(fill_value=0)
 
-        no_arrest = df["action_taken"]!="ARREST"
+        no_arrest = df["ACTION TAKEN"].str.upper()!="ARREST"
         data["person_searched_only_na"] = df[no_arrest&person_searched&~vehicle_searched].value_counts(cols, dropna=False).unstack(fill_value=0)
         data["vehicle_searched_only_na"] = df[no_arrest&vehicle_searched&~person_searched].value_counts(cols, dropna=False).unstack(fill_value=0)
         data["both_searched_na"] = df[no_arrest&vehicle_searched&person_searched].value_counts(cols, dropna=False).unstack(fill_value=0)
 
-        officer = df["physical_force_by_officer"]=="YES"
-        subject = df["physical_force_by_subject"]=="YES"
+        officer = df["FORCE USED BY OFFICER"]=="Y"
+        subject = df["FORCE USED BY SUBJECT"]=="Y"
         data["uof_officer_only"] = df[officer&~subject].value_counts(cols, dropna=False).unstack(fill_value=0)
         data["uof_subject_only"] = df[~officer&subject].value_counts(cols, dropna=False).unstack(fill_value=0)
         data["uof_both"] = df[officer&subject].value_counts(cols, dropna=False).unstack(fill_value=0)
@@ -414,16 +446,25 @@ def load_csv(csv_filename, *args, **kwargs):
                             csv_filename.replace(" ","%20"), *args, **kwargs)
 
 
-def update_saved_data(source_name, table_type, agency, start_date="2020-01-01", logger=default_logger):
+def update_saved_data(source_name, table_type, agency, start_date=2020, logger=default_logger):
     population = download_population(agency)
-    population.to_csv(rf"../fcpd-data/data/FairfaxCountyPopulation.csv", index=True)
 
+    conn = st.connection("population", type=GSheetsConnection)
+    conn.clear()
+    conn.update(data=population.to_frame().convert_dtypes().reset_index())
+
+    # TODO: Add tables for data quality analysis!
     data = download_data(source_name, table_type, agency, start_date, logger)
+
+    conn = st.connection("stops", type=GSheetsConnection)
     for k,v in data.items():
-        v.to_csv(rf"../fcpd-data/data/{source_name}_{agency}_{table_type}_{k}.csv", index=False)
+        try:
+            conn.clear(worksheet=k)
+            conn.update(worksheet=k, data=v)
+        except:
+            conn.create(worksheet=k, data=v)
 
 
 if __name__ == "__main__":
-    import streamlit_debug as stdb
-    stdb.add_debug(st)
-    update_saved_data("Virginia", "STOPS", "Fairfax County Police Department")
+    # update_saved_data("Virginia", "STOPS", "Fairfax County Police Department")
+    get_data()
